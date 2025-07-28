@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 import os
 from pathlib import Path
 
+
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -29,7 +30,7 @@ SECRET_KEY = os.environ["SECRET_KEY"]
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = os.environ["ALLOWED_HOSTS"]
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split()
 
 
 # Application definition
