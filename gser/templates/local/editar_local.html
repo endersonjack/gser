@@ -1,0 +1,128 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Editar Local</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    @media (min-width: 768px) {
+      .top-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+      }
+      .button-group-desktop {
+        display: flex;
+        gap: 10px;
+      }
+    }
+
+    @media (max-width: 767.98px) {
+      .top-actions {
+        flex-direction: column-reverse;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 20px;
+      }
+      .button-group-mobile {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-top: 20px;
+      }
+      .button-group-mobile button,
+      .button-group-mobile a {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container py-5">
+
+  {% if messages %}
+  <div class="mb-4">
+    {% for message in messages %}
+      {% if 'atualizado' in message|stringformat:"s" or 'salvar' in message|stringformat:"s" %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endif %}
+
+  <!-- Topo no Desktop -->
+  <div class="top-actions d-none d-md-flex">
+    <!-- Botões à esquerda -->
+    <div class="button-group-desktop">
+      <a href="{% url 'locais' %}" class="btn btn-outline-secondary">
+        <i class="fa fa-arrow-left"></i> Voltar
+      </a>
+
+      <button type="submit" form="form-editar" class="btn btn-primary">
+        <i class="fa fa-save"></i> Salvar
+      </button>
+
+      <form method="post" action="{% url 'excluir_local' local.id %}" onsubmit="return confirm('Tem certeza que deseja excluir este local?');">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">
+          <i class="fa fa-trash"></i> Excluir
+        </button>
+      </form>
+    </div>
+
+    <!-- Título à direita -->
+    <h4 class="mb-0"><i class="fa fa-edit me-2"></i> Editar Local</h4>
+  </div>
+
+  <!-- Título no Mobile -->
+  <div class="d-block d-md-none mb-3">
+    <h4><i class="fa fa-edit me-2"></i> Editar Local</h4>
+  </div>
+
+  <!-- Formulário de Edição -->
+  <form method="post" id="form-editar" class="card card-body shadow-sm">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label for="id_nome" class="form-label">Nome do Local</label>
+      {{ form.nome }}
+    </div>
+    <div class="mb-3">
+      <label for="id_endereco" class="form-label">Endereço</label>
+      {{ form.endereco }}
+    </div>
+
+    <!-- Botões no Mobile -->
+    <div class="button-group-mobile d-md-none">
+      <a href="{% url 'locais' %}" class="btn btn-outline-secondary">
+        <i class="fa fa-arrow-left"></i> Voltar
+      </a>
+
+      <button type="submit" class="btn btn-primary">
+        <i class="fa fa-save"></i> Salvar
+      </button>
+    </div>
+  </form>
+
+  <!-- Botão excluir (fora do form principal) no Mobile -->
+  <div class="d-md-none mt-3">
+    <form method="post" action="{% url 'excluir_local' local.id %}" onsubmit="return confirm('Tem certeza que deseja excluir este local?');">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger w-100">
+        <i class="fa fa-trash"></i> Excluir
+      </button>
+    </form>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body
+

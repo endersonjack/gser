@@ -124,19 +124,26 @@
 
   <!-- SIDEBAR -->
   <div class="sidebar bg-dark text-white p-3">
-    <div class="text-center mb-3">
-      <a href="{% url 'contratos' %}" class="btn btn-outline-light btn-sm w-75">
-        <i class="fa fa-arrow-left"></i> Voltar
-      </a>
-    </div>
+      <!-- Botões para celular e desktop -->
+      <div class="d-flex flex-wrap justify-content-center align-items-center gap-2 mb-3">
 
-    <hr />
+        <!-- Botão Voltar (texto só no desktop) -->
+        <a href="{% url 'contratos' %}" class="btn btn-outline-light btn-sm">
+          <i class="fa fa-arrow-left"></i>
+          <span class="d-none d-md-inline"> Voltar</span>
+        </a>
 
-    <div class="text-center mb-3">
-      <a href="#" class="btn btn-success w-100">
-        <i class="fa fa-plus-circle"></i> Inserir OS
-      </a>
-    </div>
+        <!-- Inserir OS (sempre visível) -->
+        <a href="#" class="btn btn-success btn-sm">
+          <i class="fa fa-plus-circle"></i> Inserir OS
+        </a>
+
+        <!-- Inserir Local (somente no celular) -->
+        <a href="{% url 'locais' %}" class="btn btn-primary btn-sm d-inline d-md-none">
+          <i class="fa fa-location-dot"></i> Ver Locais
+        </a>
+
+      </div>
 
     <!-- Accordion Status de Ordens -->
     <div class="accordion accordion-flush" id="accordionStatus">
@@ -171,18 +178,18 @@
     <hr />
 
     <!-- Menu secundário (desktop apenas) -->
+  <!-- Menu secundário (desktop apenas) -->
     <div class="d-none d-md-block">
-      <a href="#" class="d-block py-2 px-3 text-white text-decoration-none">
-        <i class="fa fa-box"></i> Serviços e Materiais
+      <a href="{% url 'locais' %}" class="d-block py-2 px-3 text-white text-decoration-none">
+        <i class="fa fa-box"></i> Locais
       </a>
-      <a href="#" class="d-block py-2 px-3 text-white text-decoration-none">
-        <i class="fa fa-users"></i> Usuários
-      </a>
-      <a href="#" class="d-block py-2 px-3 text-white text-decoration-none">
-        <i class="fa fa-address-book"></i> Clientes
-      </a>
+      
     </div>
-  </div>
+
+
+
+
+</div>
 
   <!-- MAIN CONTENT -->
   <div class="main-content">
@@ -274,6 +281,18 @@
         </div>
       </div>
     </div>
+
+    <!-- Rodapé do usuário logado com botão de logout via POST -->
+<div class="text-center mt-5 mb-3 text-muted small">
+  Logado como: <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+  
+  <form method="POST" action="{% url 'logout' %}" class="d-inline ms-2">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-link text-danger p-0" title="Sair">
+      <i class="fa fa-sign-out-alt"></i>
+    </button>
+  </form>
+</div>
 
   </div> <!-- end main-content -->
 

@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 import os
 from pathlib import Path
 import dj_database_url
-
+from django.contrib.messages import constants as messages
 
 load_dotenv()
 
@@ -45,8 +45,17 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'inicio',
     'contratos',
+    'local',
 
 ]
+
+MESSAGE_TAGS = {
+    messages.DEBUG: 'secondary',
+    messages.INFO: 'info',
+    messages.SUCCESS: 'success',
+    messages.WARNING: 'warning',
+    messages.ERROR: 'danger',
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -158,3 +167,7 @@ MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'media')
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'contratos'  # ou onde você quiser ir após o login
+LOGOUT_REDIRECT_URL = 'login'

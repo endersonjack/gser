@@ -11,7 +11,12 @@
     body {
       background-color: #f8f9fa;
     }
-
+    .logout-footer {
+  margin-top: 40px;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+  color: #6c757d;
+}
     .card:hover {
       box-shadow: 0 0 12px rgba(0, 0, 0, 0.15);
       transform: scale(1.01);
@@ -22,6 +27,11 @@
       .search-input {
         width: 100%;
         margin-top: 10px;
+      }
+
+      .mt-5.mb-3 {
+        margin-top: 50px;
+       margin-bottom: 30px;
       }
     }
   </style>
@@ -73,6 +83,23 @@
       <div class="alert alert-info">Nenhum contrato cadastrado.</div>
     {% endif %}
   </div>
+
+<!-- Rodapé do usuário logado -->
+ <div class="logout-footer text-center">
+<div class="container mt-4">
+  <div class="row">
+    <div class="col text-center text-muted small">
+      Logado como: <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+      <form method="POST" action="{% url 'logout' %}" class="d-inline ms-2">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-link text-danger p-0 align-baseline" title="Sair">
+          <i class="fa fa-sign-out-alt"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+</div>
 
   <script>
     document.getElementById("buscaContrato").addEventListener("input", function () {
