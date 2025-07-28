@@ -18,8 +18,10 @@ from django.contrib import admin
 from django.urls import path
 
 from inicio.views import inicio_sistema
+from contratos.views import *
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', inicio_sistema, name='inicio')
+    path('', selecionar_contrato, name='contratos'),
+    path('contrato/<int:id>/dashboard/', dashboard_contrato, name='dashboard_contrato'),
 ]

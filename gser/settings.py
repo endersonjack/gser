@@ -24,7 +24,7 @@ PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-0!wze=rly2l94muq@dmr#!s^$t&^((+i)a@q4tigpdgl^t2-w#'
+SECRET_KEY = os.environ["SECRET_KEY"],
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'inicio',
+    'contratos',
 
 ]
 
