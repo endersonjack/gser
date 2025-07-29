@@ -1,0 +1,152 @@
+from .models import Categoria
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
+from django.shortcuts import render, redirect, get_object_or_404
+from .forms import CategoriaForm 
+from django.contrib import messages
+from .models import OrdemServico, Servico
+from .forms import OrdemServicoForm, ServicoForm, OrdemServicoEditForm
+from django.forms import inlineformset_factory
+from contratos.models import Contrato
+
+@login_required
+def listar_categorias(request):
+    categorias = Categoria.objects.all()
+    return render(request, 'categorias/listar_categorias.html', {'categorias': categorias})
+
+@login_required
+def criar_categoria(request):
+    if request.method == 'POST':
+        form = CategoriaForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Categoria criada com sucesso.')
+            return redirect('listar_categorias')
+    else:
+        form = CategoriaForm()
+    return render(request, 'categorias/criar_categoria.html', {'form': form})
+
+
+@login_required
+def editar_categoria(request, categoria_id):
+    categoria = get_object_or_404(Categoria, id=categoria_id)
+    if request.method == 'POST':
+        form = CategoriaForm(request.POST, instance=categoria)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Categoria atualizada com sucesso.')
+            return redirect('listar_categorias')
+        else:
+            messages.error(request, 'Erro ao atualizar categoria.')
+    else:
+        form = CategoriaForm(instance=categoria)
+    return render(request, 'categorias/editar_categoria.html', {'form': form, 'categoria': categoria})
+
+@require_POST
+@login_required
+def excluir_categoria(request, categoria_id):
+    categoria = get_object_or_404(Categoria, id=categoria_id)
+    categoria.delete()
+    messages.success(request, 'Categoria excluída com sucesso.')
+    return redirect('listar_categorias')
+
+
+@login_required
+def criar_ordem_servico(request):
+    contrato_id = request.session.get('contrato_id')
+
+    if not contrato_id:
+        messages.error(request, "Contrato não selecionado.")
+        return redirect('contratos')
+
+    contrato = get_object_or_404(Contrato, id=contrato_id)
+
+    if request.method == 'POST':
+        form = OrdemServicoForm(request.POST)
+        if form.is_valid():
+            ordem = form.save(commit=False)
+            ordem.contrato = contrato  # garante contrato da sessão
+            ordem.save()
+            messages.success(request, "Ordem de serviço criada com sucesso.")
+            return redirect('ver_ordem_servico', ordem.id)
+    else:
+        form = OrdemServicoForm(initial={
+            'contrato': contrato,
+            'situacao': 'nao_iniciado'
+        })
+
+    return render(request, 'ordemservico/criar_ordem_servico.html', {
+        'form': form,
+        'contrato': contrato
+    })
+
+
+@login_required
+def ver_ordem_servico(request, ordem_id):
+    ordem = get_object_or_404(OrdemServico, id=ordem_id)
+    return render(request, 'ordemservico/ver_ordem_servico.html', {'ordem': ordem})
+
+
+@login_required
+def editar_ordem_servico(request, pk):
+    ordem = get_object_or_404(OrdemServico, pk=pk)
+
+    if request.method == 'POST':
+        form = OrdemServicoEditForm(request.POST, instance=ordem)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Ordem de Serviço atualizada com sucesso.")
+            return redirect('ver_ordem_servico', ordem_id=ordem.pk)
+    else:
+        form = OrdemServicoEditForm(instance=ordem)
+        # # desabilita o campo contrato no formulário (para exibição apenas)
+        # form.fields['contrato'].disabled = True
+
+    return render(request, 'ordemservico/editar_ordem_servico.html', {
+        'form': form,
+        'ordem': ordem,
+    })
+
+
+@login_required
+def excluir_ordem_servico(request, ordem_id):
+    ordem = get_object_or_404(OrdemServico, id=ordem_id)
+
+    if request.method == "POST":
+        contrato_id = ordem.contrato.id  # salva para redirecionar ao painel do contrato
+        ordem.delete()
+        messages.success(request, "Ordem de Serviço excluída com sucesso.")
+        return redirect('dashboard_contrato', id=contrato_id)
+
+    # Segurança: se for GET, redireciona para visualizar a ordem
+    return redirect('ver_ordem_servico', ordem_id=ordem.id)
+
+
+@login_required
+def adicionar_servicos_ordem(request, ordem_id):
+    ordem = get_object_or_404(OrdemServico, id=ordem_id)
+
+    ServicoFormSet = inlineformset_factory(
+        OrdemServico,
+        Servico,
+        form=ServicoForm,
+        extra=1,
+        can_delete=True
+    )
+
+    if request.method == 'POST':
+        formset = ServicoFormSet(request.POST, instance=ordem)
+        if formset.is_valid():
+            formset.save()
+            messages.success(request, "Serviços adicionados com sucesso.")
+            return redirect('dashboard_contrato', id=ordem.contrato.id)
+        else:
+            messages.error(request, "Erro ao salvar os serviços.")
+    else:
+        formset = ServicoFormSet(instance=ordem)
+
+    return render(request, 'ordemservico/adicionar_servicos_ordem.html', {
+        'ordem': ordem,
+        'formset': formset
+    })
+

@@ -1,0 +1,53 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nova Categoria</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container py-5">
+
+  <!-- Mensagens -->
+  {% if messages %}
+    <div class="mb-3">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- Cabeçalho -->
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <a href="{% url 'listar_categorias' %}" class="btn btn-outline-secondary">
+      <i class="fa fa-arrow-left"></i> Voltar
+    </a>
+    <h4 class="mb-0"><i class="fa fa-plus-circle"></i> Nova Categoria</h4>
+  </div>
+
+  <!-- Formulário -->
+  <form method="post" class="card card-body shadow-sm">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label for="id_nome" class="form-label">Nome da Categoria</label>
+      {{ form.nome }}
+    </div>
+    <div class="mb-3">
+      <label for="id_descricao" class="form-label">Descrição</label>
+      {{ form.descricao }}
+    </div>
+    <button type="submit" class="btn btn-success">
+      <i class="fa fa-save"></i> Salvar Categoria
+    </button>
+  </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

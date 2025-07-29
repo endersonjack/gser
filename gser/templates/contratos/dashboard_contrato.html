@@ -11,117 +11,138 @@
   <title>Dashboard - Ordem de Serviço</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-    }
+  
+<style>
+  body {
+    margin: 0;
+    padding: 0;
+  }
 
+  .wrapper {
+    display: flex;
+    flex-direction: row;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .sidebar {
+    width: 260px;
+    background-color: #343a40;
+    color: #fff;
+    padding: 15px 0;
+    flex-shrink: 0;
+    max-height: 100vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #6c757d transparent;
+  }
+
+  /* Scrollbar para navegadores WebKit */
+  .sidebar::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .sidebar::-webkit-scrollbar-thumb {
+    background-color: #6c757d;
+    border-radius: 3px;
+  }
+
+  .sidebar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .sidebar a {
+    color: #fff;
+    display: block;
+    padding: 10px 20px;
+    text-decoration: none;
+  }
+
+  .sidebar a.active,
+  .sidebar a:hover {
+    background-color: #007bff;
+  }
+
+  .main-content {
+    flex: 1;
+    overflow-y: auto;
+    background-color: #f8f9fa;
+    padding: 20px;
+  }
+
+  .card-icon {
+    font-size: 1.8rem;
+    opacity: 0.25;
+    position: absolute;
+    right: 15px;
+    bottom: 10px;
+  }
+
+  .status-card {
+    height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    min-width: 180px;
+    flex: 1 1 auto;
+  }
+
+  .status-card .card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  @media (max-width: 768px) {
     .wrapper {
-      display: flex;
-      flex-direction: row;
-      height: 100vh;
-      overflow: hidden;
+      flex-direction: column;
+      height: auto;
     }
 
     .sidebar {
-      width: 260px;
-      background-color: #343a40;
-      color: #fff;
-      padding: 15px 0;
-      flex-shrink: 0;
+      width: 100%;
+      height: auto;
+      position: relative;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      overflow: visible;
     }
 
     .sidebar a {
-      color: #fff;
-      display: block;
-      padding: 10px 20px;
-      text-decoration: none;
-    }
-
-    .sidebar a.active,
-    .sidebar a:hover {
-      background-color: #007bff;
+      padding: 8px 12px;
+      font-size: 0.9rem;
     }
 
     .main-content {
-      flex: 1;
-      overflow-y: auto;
-      background-color: #f8f9fa;
-      padding: 20px;
+      padding: 15px;
+      height: auto;
     }
 
-    .card-icon {
-      font-size: 1.8rem;
-      opacity: 0.25;
-      position: absolute;
-      right: 15px;
-      bottom: 10px;
+    .status-cards-container {
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
     }
 
     .status-card {
-      height: 120px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      position: relative;
-      min-width: 180px;
-      flex: 1 1 auto;
+      min-width: 48%;
     }
 
-    .status-card .card-body {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
+    .breadcrumb {
+      font-size: 0.85rem;
     }
+  }
 
-    @media (max-width: 768px) {
-      .wrapper {
-        flex-direction: column;
-        height: auto;
-      }
-
-      .sidebar {
-        width: 100%;
-        height: auto;
-        position: relative;
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-      }
-
-      .sidebar a {
-        padding: 8px 12px;
-        font-size: 0.9rem;
-      }
-
-      .main-content {
-        padding: 15px;
-        height: auto;
-      }
-
-      .status-cards-container {
-        flex-wrap: wrap;
-        gap: 10px;
-        justify-content: center;
-      }
-
-      .status-card {
-        min-width: 48%;
-      }
-
-      .breadcrumb {
-        font-size: 0.85rem;
-      }
+  @media (max-width: 500px) {
+    .status-card {
+      min-width: 100%;
     }
+  }
+</style>
 
-    @media (max-width: 500px) {
-      .status-card {
-        min-width: 100%;
-      }
-    }
-  </style>
 </head>
 <body>
 
@@ -139,7 +160,7 @@
         </a>
 
         <!-- Inserir OS (sempre visível) -->
-        <a href="#" class="btn btn-success btn-sm">
+        <a href="{% url 'criar_ordem_servico' %}" class="btn btn-success btn-sm">
           <i class="fa fa-plus-circle"></i> Inserir OS
         </a>
 
@@ -150,35 +171,44 @@
 
       </div>
 
-    <!-- Accordion Status de Ordens -->
-    <div class="accordion accordion-flush" id="accordionStatus">
-      <div class="accordion-item bg-dark border-0">
-        <h2 class="accordion-header">
-          <button class="accordion-button collapsed bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#statusCollapse">
-            <i class="fa fa-layer-group me-2"></i> Status de Ordens
-          </button>
-        </h2>
-        <div id="statusCollapse" class="accordion-collapse collapse">
-          <div class="accordion-body px-0">
-            <a href="#" class="d-block py-2 px-3 text-white text-decoration-none">
-              <i class="fa fa-circle text-secondary"></i> Não Iniciado
-            </a>
-            <a href="#" class="d-block py-2 px-3 text-white text-decoration-none">
-              <i class="fa fa-spinner text-primary"></i> Em Andamento
-            </a>
-            <a href="#" class="d-block py-2 px-3 text-white text-decoration-none">
-              <i class="fa fa-pause-circle text-warning"></i> Pendente/Paralisado
-            </a>
-            <a href="#" class="d-block py-2 px-3 text-white text-decoration-none">
-              <i class="fa fa-times-circle text-danger"></i> Cancelado
-            </a>
-            <a href="#" class="d-block py-2 px-3 text-white text-decoration-none">
-              <i class="fa fa-check-circle text-success"></i> Finalizado
-            </a>
+ <!-- Accordion Pesquisa -->
+<div class="accordion accordion-flush mb-4" id="accordionPesquisaOS">
+  <div class="accordion-item bg-dark border-0">
+    <h2 class="accordion-header">
+      <button class="accordion-button collapsed bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePesquisa" aria-expanded="false" aria-controls="collapsePesquisa">
+        <i class="fa fa-search me-2"></i> Pesquisar OS
+      </button>
+    </h2>
+    <div id="collapsePesquisa" class="accordion-collapse collapse" data-bs-parent="#accordionPesquisaOS">
+      <div class="accordion-body px-3 text-white">
+
+        <form method="get" action="#">
+          <div class="mb-3">
+            <label for="numero-os" class="form-label">Número da OS</label>
+            <input type="text" name="numero" id="numero-os" class="form-control" placeholder="Buscar por número da OS">
           </div>
-        </div>
+          <div class="mb-3">
+            <label for="local-os" class="form-label">Local</label>
+            <input type="text" name="local" id="local-os" class="form-control" placeholder="Buscar por local">
+          </div>
+          <div class="mb-3">
+            <label for="categoria-os" class="form-label">Categoria</label>
+            <input type="text" name="categoria" id="categoria-os" class="form-control" placeholder="Buscar por categoria">
+          </div>
+
+          <button type="submit" class="btn btn-primary mt-2">
+            <i class="fa fa-search"></i> Buscar
+          </button>
+        </form>
+
       </div>
     </div>
+  </div>
+</div>
+
+
+
+
 
     <hr />
 
@@ -188,6 +218,10 @@
       <a href="{% url 'locais' %}" class="d-block py-2 px-3 text-white text-decoration-none">
         <i class="fa fa-box"></i> Locais
       </a>
+      <a href="{% url 'listar_categorias' %}" class="d-block py-2 px-3 text-white text-decoration-none">
+        <i class="fa fa-tags"></i> Categorias
+      </a>
+
       
     </div>
 
@@ -198,94 +232,115 @@
 
   <!-- MAIN CONTENT -->
   <div class="main-content">
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
-      <h2><i class="fa fa-file-alt"></i> Ordem de serviço</h2>
+    
+  <!-- Cabeçalho -->  
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
+      <div>
+        <h2 class="mb-1"><i class="fa fa-file-alt"></i> Contrato {{ contrato.numero }}</h2>
+        <p class="mb-0 text-muted small">
+          <strong>Empresa:</strong> {{ contrato.empresa_contratada }} |
+          <strong>Órgão:</strong> {{ contrato.orgao_contratante }}
+        </p>
+      </div>
 
-      <!-- Breadcrumb escondido no mobile -->
+      <!-- Breadcrumb (desktop) -->
       <nav aria-label="breadcrumb" class="d-none d-md-block">
         <ol class="breadcrumb mb-0">
-          <li class="breadcrumb-item"><a href="#">Home</a></li>
-          <li class="breadcrumb-item active" aria-current="page">Ordem de serviço</li>
+          <li class="breadcrumb-item"><a href="{% url 'contratos' %}">Contratos</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Painel</li>
         </ol>
       </nav>
-    </div>
+  </div>
+
+
 
     <!-- Cards - Status de Ordens -->
-    <div class="d-flex flex-wrap gap-3 mb-4 status-cards-container">
-      <div class="card bg-secondary text-white status-card">
-        <div class="card-body">
-          <h3>12</h3>
-          <p>Não Iniciado</p>
-          <i class="fa fa-circle card-icon"></i>
-        </div>
-      </div>
-
-      <div class="card bg-primary text-white status-card">
-        <div class="card-body">
-          <h3>18</h3>
-          <p>Em Andamento</p>
-          <i class="fa fa-spinner card-icon"></i>
-        </div>
-      </div>
-
-      <div class="card bg-warning text-dark status-card">
-        <div class="card-body">
-          <h3>7</h3>
-          <p>Pendente/Paralisado</p>
-          <i class="fa fa-pause-circle card-icon"></i>
-        </div>
-      </div>
-
-      <div class="card bg-danger text-white status-card">
-        <div class="card-body">
-          <h3>3</h3>
-          <p>Cancelado</p>
-          <i class="fa fa-times-circle card-icon"></i>
-        </div>
-      </div>
-
-      <div class="card bg-success text-white status-card">
-        <div class="card-body">
-          <h3>30</h3>
-          <p>Finalizado</p>
-          <i class="fa fa-check-circle card-icon"></i>
-        </div>
-      </div>
+<div class="d-flex flex-wrap gap-3 mb-4 status-cards-container">
+  <div class="card bg-secondary text-white status-card">
+    <div class="card-body">
+      <h3>{{ status_counts.nao_iniciado }}</h3>
+      <p>Não Iniciado</p>
+      <i class="fa fa-circle card-icon"></i>
     </div>
+  </div>
 
-    <!-- Tabela de Ordens -->
-    <div class="card">
-      <div class="card-body">
-        <h5 class="card-title">Lista de Ordens</h5>
-        <input type="text" class="form-control mb-3" placeholder="Pesquisar..." />
-        <div class="table-responsive">
-          <table class="table table-bordered table-hover table-striped">
-            <thead class="table-light">
-              <tr>
-                <th>nº O.S.</th>
-                <th>categoria</th>
-                <th>técnico</th>
-                <th>cliente</th>
-                <th>cidade</th>
-                <th>início</th>
-                <th>programada</th>
-                <th>fim</th>
-                <th>status</th>
-                <th>ação</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>00123</td><td>Elétrica</td><td>João</td><td>Empresa X</td>
-                <td>Fortaleza</td><td>01/07</td><td>02/07</td><td>05/07</td>
-                <td>Finalizada</td><td><button class="btn btn-sm btn-primary">Ver</button></td>
-              </tr>
-              <!-- outros registros -->
-            </tbody>
-          </table>
-        </div>
-      </div>
+  <div class="card bg-primary text-white status-card">
+    <div class="card-body">
+      <h3>{{ status_counts.em_andamento }}</h3>
+      <p>Em Andamento</p>
+      <i class="fa fa-spinner card-icon"></i>
     </div>
+  </div>
+
+  <div class="card bg-warning text-dark status-card">
+    <div class="card-body">
+      <h3>{{ status_counts.pendente }}</h3>
+      <p>Pendente/Paralisado</p>
+      <i class="fa fa-pause-circle card-icon"></i>
+    </div>
+  </div>
+
+  <div class="card bg-danger text-white status-card">
+    <div class="card-body">
+      <h3>{{ status_counts.cancelado }}</h3>
+      <p>Cancelado</p>
+      <i class="fa fa-times-circle card-icon"></i>
+    </div>
+  </div>
+
+  <div class="card bg-success text-white status-card">
+    <div class="card-body">
+      <h3>{{ status_counts.finalizado }}</h3>
+      <p>Finalizado</p>
+      <i class="fa fa-check-circle card-icon"></i>
+    </div>
+  </div>
+</div>
+
+<!-- Tabela - Últimos Serviços do Contrato -->
+<div class="card mt-4">
+  <div class="card-body">
+    <h5 class="card-title d-flex justify-content-between align-items-center">
+      Últimos Serviços Adicionados
+      <a href="#" class="btn btn-outline-primary btn-sm">Ver Todos</a>
+    </h5>
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover table-striped">
+        <thead class="table-light">
+          <tr>
+            <th>Serviço</th>
+            <th>nº OS</th>
+            <th>Local</th>
+            <th>Categoria</th>
+            <th>Situação</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for servico in ultimos_servicos %}
+          <tr>
+            <td>
+              <a href="{% url 'ver_ordem_servico' servico.ordem.id %}">
+                {{ servico.descricao|truncatechars:50 }}
+              </a>
+            </td>
+            <td>{{ servico.ordem.numero }}</td>
+            <td>{{ servico.ordem.local.nome }}</td>
+            <td>{{ servico.categoria.nome }}</td>
+            <td>{{ servico.get_situacao_display }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center text-muted">Nenhum serviço cadastrado para este contrato.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+
 
     <!-- Rodapé do usuário logado com botão de logout via POST -->
 <div class="text-center mt-5 mb-3 text-muted small">

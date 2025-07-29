@@ -1,0 +1,155 @@
+
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="{% static 'manifest.json' %}">
+  <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+  <meta name="theme-color" content="#0d6efd" />
+  <title>Dashboard Geral - Ordens de Serviço</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    body { margin: 0; padding: 0; }
+    .wrapper { display: flex; flex-direction: row; height: 100vh; overflow: hidden; }
+    .sidebar { width: 260px; background-color: #343a40; color: #fff; padding: 15px 0; flex-shrink: 0; max-height: 100vh; overflow-y: auto; }
+    .sidebar a { color: #fff; display: block; padding: 10px 20px; text-decoration: none; }
+    .sidebar a.active, .sidebar a:hover { background-color: #007bff; }
+    .main-content { flex: 1; overflow-y: auto; background-color: #f8f9fa; padding: 20px; }
+    .card-icon { font-size: 1.8rem; opacity: 0.25; position: absolute; right: 15px; bottom: 10px; }
+    .status-card { height: 120px; display: flex; flex-direction: column; justify-content: center; position: relative; min-width: 180px; flex: 1 1 auto; }
+    .status-card .card-body { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+    @media (max-width: 768px) {
+      .wrapper { flex-direction: column; height: auto; }
+      .sidebar { width: 100%; height: auto; display: flex; flex-wrap: wrap; justify-content: center; }
+      .main-content { padding: 15px; height: auto; }
+      .status-cards-container { flex-wrap: wrap; gap: 10px; justify-content: center; }
+      .status-card { min-width: 48%; }
+    }
+    @media (max-width: 500px) { .status-card { min-width: 100%; } }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+  <!-- Sidebar -->
+  <div class="sidebar bg-dark text-white p-3">
+    <a href="{% url 'contratos' %}" class="btn btn-outline-light btn-sm mb-3">
+      <i class="fa fa-arrow-left"></i> <span class="d-none d-md-inline">Voltar</span>
+    </a>
+    <div class="accordion accordion-flush mb-4" id="accordionPesquisaGeral">
+      <div class="accordion-item bg-dark border-0">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePesquisaGeral">
+            <i class="fa fa-search me-2"></i> Pesquisar OS
+          </button>
+        </h2>
+        <div id="collapsePesquisaGeral" class="accordion-collapse collapse">
+          <div class="accordion-body px-3 text-white">
+            <form method="get" action="#">
+              <div class="mb-3"><label class="form-label">Número</label><input type="text" class="form-control" name="numero"></div>
+              <div class="mb-3"><label class="form-label">Local</label><input type="text" class="form-control" name="local"></div>
+              <div class="mb-3"><label class="form-label">Categoria</label><input type="text" class="form-control" name="categoria"></div>
+              <button class="btn btn-primary mt-2" type="submit"><i class="fa fa-search"></i> Buscar</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+     <!-- Cabeçalho -->  
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
+          
+        <div>
+            <h2 class="mb-1"><i class="fa fa-layer-group"></i> Todos os Contratos</h2>
+            <p class="mb-0 text-muted small">
+              <strong>Empresa:</strong> BRASIL CONSTRUÇÃO LTDA |
+              <strong>Órgão:</strong> PREFEITURA MUNICIPAL DE PARNAMIRIM
+            </p>
+          </div>
+
+          <!-- Breadcrumb (desktop) -->
+          <nav aria-label="breadcrumb" class="d-none d-md-block">
+            <ol class="breadcrumb mb-0">
+              <li class="breadcrumb-item"><a href="{% url 'contratos' %}">Contratos</a></li>
+              <li class="breadcrumb-item active" aria-current="page">Painel</li>
+            </ol>
+          </nav>
+
+      </div>
+
+
+<!-- Cards - Status de Ordens -->
+    <div class="d-flex flex-wrap gap-3 mb-4 status-cards-container">
+      <div class="card bg-secondary text-white status-card"><div class="card-body"><h3>{{ status_counts.nao_iniciado }}</h3><p>Não Iniciado</p><i class="fa fa-circle card-icon"></i></div></div>
+      <div class="card bg-primary text-white status-card"><div class="card-body"><h3>{{ status_counts.em_andamento }}</h3><p>Em Andamento</p><i class="fa fa-spinner card-icon"></i></div></div>
+      <div class="card bg-warning text-dark status-card"><div class="card-body"><h3>{{ status_counts.pendente }}</h3><p>Pendente/Paralisado</p><i class="fa fa-pause-circle card-icon"></i></div></div>
+      <div class="card bg-danger text-white status-card"><div class="card-body"><h3>{{ status_counts.cancelado }}</h3><p>Cancelado</p><i class="fa fa-times-circle card-icon"></i></div></div>
+      <div class="card bg-success text-white status-card"><div class="card-body"><h3>{{ status_counts.finalizado }}</h3><p>Finalizado</p><i class="fa fa-check-circle card-icon"></i></div></div>
+    </div>
+
+    <!-- Tabela - Últimas Ordens de Serviço -->
+<div class="card mt-4">
+  <div class="card-body">
+    <h5 class="card-title d-flex justify-content-between align-items-center">
+      Últimas Ordens de Serviço
+      <a href="#" class="btn btn-outline-primary btn-sm">Ver Todas</a>
+    </h5>
+    <div class="table-responsive">
+      <table class="table table-bordered table-hover table-striped">
+        <thead class="table-light">
+          <tr>
+            <th>Contrato</th>
+            <th>Nº O.S.</th>
+            <th>Categoria</th>
+            <th>Local</th>
+            <th>Início</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ordem in ordens_recentes %}
+          <tr>
+            <td>{{ ordem.contrato.numero }}</td>
+            <td>
+              <a href="{% url 'ver_ordem_servico' ordem.id %}">
+                {{ ordem.numero }}
+              </a>
+            </td>
+            <td>
+              {% with ordem.servicos.first as servico %}
+                {{ servico.categoria.nome|default:"-" }}
+              {% endwith %}
+            </td>
+            <td>{{ ordem.local.nome|default:"-" }}</td>
+            <td>{{ ordem.data_inicio|date:"d/m/Y" }}</td>
+            <td>{{ ordem.get_situacao_display }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="text-center text-muted">Nenhuma ordem de serviço encontrada.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

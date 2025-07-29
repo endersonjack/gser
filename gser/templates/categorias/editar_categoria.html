@@ -1,0 +1,55 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editar Categoria</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container py-5">
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <a href="{% url 'listar_categorias' %}" class="btn btn-outline-secondary">
+      <i class="fa fa-arrow-left"></i> Voltar
+    </a>
+    <h4 class="mb-0"><i class="fa fa-edit"></i> Editar Categoria</h4>
+  </div>
+
+  <form method="post" class="card card-body shadow-sm mb-3">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label for="id_nome" class="form-label">Nome</label>
+      {{ form.nome }}
+    </div>
+    <div class="mb-3">
+      <label for="id_descricao" class="form-label">Descrição</label>
+      {{ form.descricao }}
+    </div>
+    <button type="submit" class="btn btn-primary">
+      <i class="fa fa-save"></i> Salvar Alterações
+    </button>
+  </form>
+
+  <!-- Botão excluir -->
+  <form method="post" action="{% url 'excluir_categoria' categoria.id %}" onsubmit="return confirm('Tem certeza que deseja excluir esta categoria?');">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">
+      <i class="fa fa-trash"></i> Excluir Categoria
+    </button>
+  </form>
+
+</div>
+</body>
+</html>

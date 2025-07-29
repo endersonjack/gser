@@ -63,10 +63,10 @@
     <!-- Título e botões -->
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
       <div class="d-flex align-items-center gap-2">
-        <button onclick="history.back()" class="btn btn-outline-secondary d-flex align-items-center">
-          <i class="fa fa-arrow-left"></i>
-          <span class="ms-2 d-none d-sm-inline">Voltar</span>
-        </button>
+            <!-- Botão voltar -->
+    <a href="{% url 'dashboard_contrato' request.session.contrato_id %}" class="btn btn-outline-secondary">
+      <i class="fa fa-arrow-left"></i> <span class="d-none d-sm-inline">Voltar</span>
+    </a>
         <a href="{% url 'inserir_local' %}" class="btn btn-success d-none d-sm-inline-block">
           <i class="fa fa-plus-circle"></i> Inserir Local
         </a>
