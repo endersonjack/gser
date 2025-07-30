@@ -28,6 +28,11 @@ urlpatterns = [
     path('ordem/<int:pk>/editar', editar_ordem_servico, name='editar_ordem_servico'),
     path('ordem/<int:ordem_id>/excluir/', excluir_ordem_servico, name='excluir_ordem_servico'),
     path('ordem/<int:ordem_id>/servicos/', adicionar_servicos_ordem, name='adicionar_servicos_ordem'),
+    path('ordem/<int:ordem_id>/servico/<int:servico_id>/editar/', editar_servico, name='editar_servico'),
+    path('ordem/<int:ordem_id>/servico/<int:servico_id>/', visualizar_servico, name='visualizar_servico'),
+    path('ordem/<int:ordem_id>/servico/<int:servico_id>/excluir/', excluir_servico, name='excluir_servico'),
+
+ 
 
 
 

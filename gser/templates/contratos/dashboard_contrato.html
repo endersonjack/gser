@@ -12,223 +12,157 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
   
-<style>
-  body {
-    margin: 0;
-    padding: 0;
-  }
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
 
-  .wrapper {
-    display: flex;
-    flex-direction: row;
-    height: 100vh;
-    overflow: hidden;
-  }
-
-  .sidebar {
-    width: 260px;
-    background-color: #343a40;
-    color: #fff;
-    padding: 15px 0;
-    flex-shrink: 0;
-    max-height: 100vh;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: #6c757d transparent;
-  }
-
-  /* Scrollbar para navegadores WebKit */
-  .sidebar::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  .sidebar::-webkit-scrollbar-thumb {
-    background-color: #6c757d;
-    border-radius: 3px;
-  }
-
-  .sidebar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .sidebar a {
-    color: #fff;
-    display: block;
-    padding: 10px 20px;
-    text-decoration: none;
-  }
-
-  .sidebar a.active,
-  .sidebar a:hover {
-    background-color: #007bff;
-  }
-
-  .main-content {
-    flex: 1;
-    overflow-y: auto;
-    background-color: #f8f9fa;
-    padding: 20px;
-  }
-
-  .card-icon {
-    font-size: 1.8rem;
-    opacity: 0.25;
-    position: absolute;
-    right: 15px;
-    bottom: 10px;
-  }
-
-  .status-card {
-    height: 120px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    position: relative;
-    min-width: 180px;
-    flex: 1 1 auto;
-  }
-
-  .status-card .card-body {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
-
-  @media (max-width: 768px) {
     .wrapper {
-      flex-direction: column;
-      height: auto;
+      display: flex;
+      flex-direction: row;
+      height: 100vh;
+      overflow: hidden;
     }
 
     .sidebar {
-      width: 100%;
-      height: auto;
-      position: relative;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      overflow: visible;
+      width: 260px;
+      background-color: #343a40;
+      color: #fff;
+      padding: 20px 15px;
+      flex-shrink: 0;
+      max-height: 100vh;
+      overflow-y: auto;
     }
 
     .sidebar a {
-      padding: 8px 12px;
-      font-size: 0.9rem;
+      display: block;
+      color: #fff;
+      padding: 10px 15px;
+      text-decoration: none;
+      border-radius: 4px;
+      margin-bottom: 8px;
+    }
+
+    .sidebar a:hover,
+    .sidebar a.active {
+      background-color: #007bff;
     }
 
     .main-content {
-      padding: 15px;
-      height: auto;
+      flex: 1;
+      overflow-y: auto;
+      background-color: #f8f9fa;
+      padding: 20px;
     }
 
-    .status-cards-container {
-      flex-wrap: wrap;
-      gap: 10px;
+    .card-icon {
+      font-size: 1.8rem;
+      opacity: 0.25;
+      position: absolute;
+      right: 15px;
+      bottom: 10px;
+    }
+
+    .status-card {
+      height: 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      min-width: 180px;
+      flex: 1 1 auto;
+    }
+
+    .status-card .card-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
       justify-content: center;
     }
 
-    .status-card {
-      min-width: 48%;
+    @media (max-width: 768px) {
+      .wrapper {
+        flex-direction: column;
+        height: auto;
+      }
+
+      .sidebar {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .sidebar a {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+        text-align: center;
+        flex: 1 1 auto;
+      }
+
+      .main-content {
+        padding: 15px;
+      }
+
+      .status-cards-container {
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+      }
+
+      .status-card {
+        min-width: 48%;
+      }
+
+      .breadcrumb {
+        font-size: 0.85rem;
+      }
     }
 
-    .breadcrumb {
-      font-size: 0.85rem;
+    @media (max-width: 500px) {
+      .status-card {
+        min-width: 100%;
+      }
     }
-  }
-
-  @media (max-width: 500px) {
-    .status-card {
-      min-width: 100%;
-    }
-  }
-</style>
-
+  </style>
 </head>
 <body>
 
 <div class="wrapper">
 
   <!-- SIDEBAR -->
-  <div class="sidebar bg-dark text-white p-3">
-      <!-- Botões para celular e desktop -->
-      <div class="d-flex flex-wrap justify-content-center align-items-center gap-2 mb-3">
+<div class="sidebar bg-dark p-2" style="min-height: 100vh;">
 
-        <!-- Botão Voltar (texto só no desktop) -->
-        <a href="{% url 'contratos' %}" class="btn btn-outline-light btn-sm">
-          <i class="fa fa-arrow-left"></i>
-          <span class="d-none d-md-inline"> Voltar</span>
-        </a>
+  <a href="{% url 'contratos' %}" class="d-block py-2 px-3 text-white text-decoration-none">
+    <i class="fa fa-arrow-left me-2"></i> Contratos
+  </a>
 
-        <!-- Inserir OS (sempre visível) -->
-        <a href="{% url 'criar_ordem_servico' %}" class="btn btn-success btn-sm">
-          <i class="fa fa-plus-circle"></i> Inserir OS
-        </a>
+  <a href="{% url 'criar_ordem_servico' %}" class="btn btn-success btn-sm w-100 text-start my-2">
+    <i class="fa fa-plus-circle me-2"></i> Inserir OS
+  </a>
 
-        <!-- Inserir Local (somente no celular) -->
-        <a href="{% url 'locais' %}" class="btn btn-primary btn-sm d-inline d-md-none">
-          <i class="fa fa-location-dot"></i> Ver Locais
-        </a>
+  <a href="#" class="d-block py-2 px-3 text-white text-decoration-none">
+    <i class="fa fa-search me-2"></i> Pesquisar OS
+  </a>
 
-      </div>
+  <a href="#" class="d-block py-2 px-3 text-white text-decoration-none">
+    <i class="fa fa-search me-2"></i> Pesquisar Serviço
+  </a>
 
- <!-- Accordion Pesquisa -->
-<div class="accordion accordion-flush mb-4" id="accordionPesquisaOS">
-  <div class="accordion-item bg-dark border-0">
-    <h2 class="accordion-header">
-      <button class="accordion-button collapsed bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePesquisa" aria-expanded="false" aria-controls="collapsePesquisa">
-        <i class="fa fa-search me-2"></i> Pesquisar OS
-      </button>
-    </h2>
-    <div id="collapsePesquisa" class="accordion-collapse collapse" data-bs-parent="#accordionPesquisaOS">
-      <div class="accordion-body px-3 text-white">
+  <hr class="bg-light" />
 
-        <form method="get" action="#">
-          <div class="mb-3">
-            <label for="numero-os" class="form-label">Número da OS</label>
-            <input type="text" name="numero" id="numero-os" class="form-control" placeholder="Buscar por número da OS">
-          </div>
-          <div class="mb-3">
-            <label for="local-os" class="form-label">Local</label>
-            <input type="text" name="local" id="local-os" class="form-control" placeholder="Buscar por local">
-          </div>
-          <div class="mb-3">
-            <label for="categoria-os" class="form-label">Categoria</label>
-            <input type="text" name="categoria" id="categoria-os" class="form-control" placeholder="Buscar por categoria">
-          </div>
-
-          <button type="submit" class="btn btn-primary mt-2">
-            <i class="fa fa-search"></i> Buscar
-          </button>
-        </form>
-
-      </div>
-    </div>
+  <div class="d-none d-md-block">
+    <a href="{% url 'locais' %}" class="d-block py-2 px-3 text-white text-decoration-none">
+      <i class="fa fa-box me-2"></i> Locais
+    </a>
+    <a href="{% url 'listar_categorias' %}" class="d-block py-2 px-3 text-white text-decoration-none">
+      <i class="fa fa-tags me-2"></i> Categorias
+    </a>
   </div>
 </div>
 
-
-
-
-
-    <hr />
-
-    <!-- Menu secundário (desktop apenas) -->
-  <!-- Menu secundário (desktop apenas) -->
-    <div class="d-none d-md-block">
-      <a href="{% url 'locais' %}" class="d-block py-2 px-3 text-white text-decoration-none">
-        <i class="fa fa-box"></i> Locais
-      </a>
-      <a href="{% url 'listar_categorias' %}" class="d-block py-2 px-3 text-white text-decoration-none">
-        <i class="fa fa-tags"></i> Categorias
-      </a>
-
-      
-    </div>
-
-
-
-
-</div>
 
   <!-- MAIN CONTENT -->
   <div class="main-content">
@@ -297,6 +231,56 @@
   </div>
 </div>
 
+{% if ordens_busca is not None %}
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5 class="card-title">Resultados da Busca</h5>
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+          <thead class="table-light">
+            <tr>
+              <th>OS Nº</th>
+              <th>Local</th>
+              <th>Data</th>
+              <th># Serviços</th>
+              <th>Situação</th>
+              <th>Ação</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if ordens_busca %}
+              {% for os in ordens_busca %}
+                <tr>
+                  <td>
+                    <a href="{% url 'visualizar_ordem' os.id %}">
+                      {{ os.numero }}
+                    </a>
+                  </td>
+                  <td>{{ os.local.nome }}</td>
+                  <td>{{ os.data_criacao|date:"d/m/Y" }}</td>
+                  <td>{{ os.servicos.count }}</td>
+                  <td>{{ os.get_situacao_display }}</td>
+                  <td>
+                    <a href="{% url 'visualizar_ordem' os.id %}" class="btn btn-sm btn-primary">
+                      Ver
+                    </a>
+                  </td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="6" class="text-center text-muted">
+                  Nenhuma OS encontrada para esses filtros.
+                </td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
 <!-- Tabela - Últimos Serviços do Contrato -->
 <div class="card mt-4">
   <div class="card-body">
@@ -308,11 +292,11 @@
       <table class="table table-bordered table-hover table-striped">
         <thead class="table-light">
           <tr>
-            <th>Serviço</th>
+            <th>Descrição do Serviço</th>
             <th>nº OS</th>
             <th>Local</th>
             <th>Categoria</th>
-            <th>Situação</th>
+            <th>Situação do Serviço</th>
           </tr>
         </thead>
         <tbody>

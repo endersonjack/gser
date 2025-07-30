@@ -126,27 +126,85 @@ def excluir_ordem_servico(request, ordem_id):
 def adicionar_servicos_ordem(request, ordem_id):
     ordem = get_object_or_404(OrdemServico, id=ordem_id)
 
+    # inlineformset associa automaticamente cada serviço à ordem
     ServicoFormSet = inlineformset_factory(
         OrdemServico,
         Servico,
         form=ServicoForm,
         extra=1,
-        can_delete=True
+        can_delete=False
     )
 
     if request.method == 'POST':
-        formset = ServicoFormSet(request.POST, instance=ordem)
+        formset = ServicoFormSet(request.POST, instance=ordem, prefix='servicos')
+
+
         if formset.is_valid():
             formset.save()
-            messages.success(request, "Serviços adicionados com sucesso.")
-            return redirect('dashboard_contrato', id=ordem.contrato.id)
+            messages.success(request, "Serviço salvo com sucesso.")
+
+            if 'encerrar' in request.POST:
+                return redirect('dashboard_contrato', id=ordem.contrato.id)
+            else:
+                return redirect('adicionar_servicos_ordem', ordem_id=ordem.id)
         else:
-            messages.error(request, "Erro ao salvar os serviços.")
+            messages.error(request, "Erro ao salvar o serviço.")
     else:
-        formset = ServicoFormSet(instance=ordem)
+        formset = ServicoFormSet(instance=ordem, queryset=Servico.objects.none())
 
     return render(request, 'ordemservico/adicionar_servicos_ordem.html', {
         'ordem': ordem,
         'formset': formset
     })
 
+@login_required
+def editar_servico(request, ordem_id, servico_id):
+    ordem = get_object_or_404(OrdemServico, id=ordem_id)
+    servico = get_object_or_404(Servico, id=servico_id, ordem=ordem)
+
+    if request.method == 'POST':
+        form = ServicoForm(request.POST, instance=servico)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Serviço atualizado com sucesso.")
+            return redirect('ver_ordem_servico', ordem_id=ordem.id)
+        else:
+            messages.error(request, "Erro ao atualizar o serviço.")
+    else:
+        form = ServicoForm(instance=servico)
+
+    return render(request, 'ordemservico/editar_servico.html', {
+        'ordem': ordem,
+        'servico': servico,
+        'form': form,
+    })
+
+def visualizar_servico(request, ordem_id, servico_id):
+    ordem = get_object_or_404(OrdemServico, id=ordem_id)
+    servico = get_object_or_404(Servico, id=servico_id, ordem=ordem)
+
+    # Extrai as choices do campo “situacao”
+    situacao_choices = Servico._meta.get_field('situacao').choices
+
+    if request.method == 'POST':
+        nova = request.POST.get('situacao')
+        if nova in dict(situacao_choices):
+            servico.situacao = nova
+            servico.save()
+        return redirect('visualizar_servico', ordem_id=ordem.id, servico_id=servico.id)
+
+    return render(request, 'ordemservico/visualizar_servico.html', {
+        'ordem': ordem,
+        'servico': servico,
+        'situacao_choices': situacao_choices,
+    })
+
+def excluir_servico(request, ordem_id, servico_id):
+    servico = get_object_or_404(Servico, id=servico_id, ordem__id=ordem_id)
+    if request.method == 'POST':
+        servico.delete()
+        # Redireciona para a visualização da ordem, ou onde preferir
+        return redirect('visualizar_ordem', ordem_id=ordem_id)
+    # Se quiser, você pode renderizar uma página de confirmação;  
+    # mas como já há confirmação em JS, apenas redirecione:
+    return redirect('ordemservico/visualizar_servico', ordem_id=ordem_id, servico_id=servico_id)

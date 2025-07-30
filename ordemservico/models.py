@@ -56,9 +56,9 @@ class Servico(models.Model):
     ordem = models.ForeignKey(OrdemServico, on_delete=models.CASCADE, related_name='servicos')
     descricao = models.TextField()
     situacao = models.CharField(max_length=20, choices=OrdemServico.STATUS_CHOICES)
-    quantidade = models.TextField(blank=True)
+    quantidade = models.TextField(null=True, blank=True)
     categoria = models.ForeignKey(Categoria, on_delete=models.SET_NULL, null=True, blank=True)
-    observacao = models.TextField(blank=True)
+    observacao = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.descricao[:40]}..."
