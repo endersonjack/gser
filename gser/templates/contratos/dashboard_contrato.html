@@ -5,24 +5,24 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="manifest" href="{% static 'manifest.json' %}">
-<link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
-<link rel="shortcut icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
-<meta name="theme-color" content="#0d6efd" />
+  <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+  <link rel="shortcut icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+  <meta name="theme-color" content="#0d6efd" />
   <title>Dashboard - Ordem de Serviço</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
-  
   <style>
     body {
       margin: 0;
       padding: 0;
+      padding-bottom: 70px; /* espaço para menu inferior */
     }
 
     .wrapper {
       display: flex;
       flex-direction: row;
-      height: 100vh;
-      overflow: hidden;
+      min-height: 100vh;
+      align-items: stretch;
     }
 
     .sidebar {
@@ -31,8 +31,8 @@
       color: #fff;
       padding: 20px 15px;
       flex-shrink: 0;
-      max-height: 100vh;
-      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
     }
 
     .sidebar a {
@@ -51,7 +51,6 @@
 
     .main-content {
       flex: 1;
-      overflow-y: auto;
       background-color: #f8f9fa;
       padding: 20px;
     }
@@ -79,6 +78,46 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
+    }
+
+    .mobile-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: #343a40;
+      border-top: 1px solid #444;
+      display: flex;
+      justify-content: space-around;
+      z-index: 1050;
+      padding: 6px 0;
+    }
+
+    .mobile-nav a {
+      flex: 1;
+      text-align: center;
+      color: #bbb;
+      text-decoration: none;
+      font-size: 12px;
+      transition: all 0.2s ease-in-out;
+    }
+
+    .mobile-nav a:hover,
+    .mobile-nav a.active {
+      color: #0d6efd;
+    }
+
+    .mobile-nav i {
+      display: block;
+      font-size: 20px;
+      margin-bottom: 2px;
+      transition: transform 0.2s ease;
+    }
+
+    .mobile-nav a:active i,
+    .mobile-nav a.active i {
+      transform: scale(1.2);
+      color: #0d6efd;
     }
 
     @media (max-width: 768px) {
@@ -130,45 +169,36 @@
 </head>
 <body>
 
-<div class="wrapper">
+<div class="wrapper flex-column flex-md-row">
 
-  <!-- SIDEBAR -->
-<div class="sidebar bg-dark p-2" style="min-height: 100vh;">
-
-  <a href="{% url 'contratos' %}" class="d-block py-2 px-3 text-white text-decoration-none">
-    <i class="fa fa-arrow-left me-2"></i> Contratos
-  </a>
-
-  <a href="{% url 'criar_ordem_servico' %}" class="btn btn-success btn-sm w-100 text-start my-2">
-    <i class="fa fa-plus-circle me-2"></i> Inserir OS
-  </a>
-
-  <a href="#" class="d-block py-2 px-3 text-white text-decoration-none">
-    <i class="fa fa-search me-2"></i> Pesquisar OS
-  </a>
-
-  <a href="#" class="d-block py-2 px-3 text-white text-decoration-none">
-    <i class="fa fa-search me-2"></i> Pesquisar Serviço
-  </a>
-
-  <hr class="bg-light" />
-
-  <div class="d-none d-md-block">
-    <a href="{% url 'locais' %}" class="d-block py-2 px-3 text-white text-decoration-none">
-      <i class="fa fa-box me-2"></i> Locais
+  <div class="sidebar bg-dark p-2 order-5 order-md-1">
+    <a href="{% url 'contratos' %}" class="d-none d-md-block py-2 px-3 text-white text-decoration-none">
+      <i class="fa fa-arrow-left me-2"></i> Contratos
     </a>
-    <a href="{% url 'listar_categorias' %}" class="d-block py-2 px-3 text-white text-decoration-none">
-      <i class="fa fa-tags me-2"></i> Categorias
+    <a href="{% url 'criar_ordem_servico' %}" class="btn btn-success btn-sm w-100 text-start my-2 d-none d-md-block">
+      <i class="fa fa-plus-circle me-2"></i> Inserir OS
     </a>
+    <a href="#" class="d-block py-2 px-3 text-white text-decoration-none">
+      <i class="fa fa-search me-2"></i> Pesquisar OS
+    </a>
+    <a href="#" class="d-block py-2 px-3 text-white text-decoration-none">
+      <i class="fa fa-search me-2"></i> Pesquisar Serviço
+    </a>
+    <hr class="bg-light" />
+    <div class="d-none d-md-block">
+      <a href="{% url 'locais' %}" class="d-block py-2 px-3 text-white text-decoration-none">
+        <i class="fa fa-box me-2"></i> Locais
+      </a>
+      <a href="{% url 'listar_categorias' %}" class="d-block py-2 px-3 text-white text-decoration-none">
+        <i class="fa fa-tags me-2"></i> Categorias
+      </a>
+    </div>
   </div>
-</div>
 
+  <div class="main-content order-1 order-md-2">
 
-  <!-- MAIN CONTENT -->
-  <div class="main-content">
-    
-  <!-- Cabeçalho -->  
-  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
+    <!-- Cabeçalho -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
       <div>
         <h2 class="mb-1"><i class="fa fa-file-alt"></i> Contrato {{ contrato.numero }}</h2>
         <p class="mb-0 text-muted small">
@@ -176,173 +206,95 @@
           <strong>Órgão:</strong> {{ contrato.orgao_contratante }}
         </p>
       </div>
-
-      <!-- Breadcrumb (desktop) -->
       <nav aria-label="breadcrumb" class="d-none d-md-block">
         <ol class="breadcrumb mb-0">
           <li class="breadcrumb-item"><a href="{% url 'contratos' %}">Contratos</a></li>
           <li class="breadcrumb-item active" aria-current="page">Painel</li>
         </ol>
       </nav>
-  </div>
-
-
-
-    <!-- Cards - Status de Ordens -->
-<div class="d-flex flex-wrap gap-3 mb-4 status-cards-container">
-  <div class="card bg-secondary text-white status-card">
-    <div class="card-body">
-      <h3>{{ status_counts.nao_iniciado }}</h3>
-      <p>Não Iniciado</p>
-      <i class="fa fa-circle card-icon"></i>
     </div>
-  </div>
 
-  <div class="card bg-primary text-white status-card">
-    <div class="card-body">
-      <h3>{{ status_counts.em_andamento }}</h3>
-      <p>Em Andamento</p>
-      <i class="fa fa-spinner card-icon"></i>
-    </div>
-  </div>
+    <!-- Cards + Tabela -->
+    <div class="d-flex flex-column">
 
-  <div class="card bg-warning text-dark status-card">
-    <div class="card-body">
-      <h3>{{ status_counts.pendente }}</h3>
-      <p>Pendente/Paralisado</p>
-      <i class="fa fa-pause-circle card-icon"></i>
-    </div>
-  </div>
-
-  <div class="card bg-danger text-white status-card">
-    <div class="card-body">
-      <h3>{{ status_counts.cancelado }}</h3>
-      <p>Cancelado</p>
-      <i class="fa fa-times-circle card-icon"></i>
-    </div>
-  </div>
-
-  <div class="card bg-success text-white status-card">
-    <div class="card-body">
-      <h3>{{ status_counts.finalizado }}</h3>
-      <p>Finalizado</p>
-      <i class="fa fa-check-circle card-icon"></i>
-    </div>
-  </div>
-</div>
-
-{% if ordens_busca is not None %}
-  <div class="card mb-4">
-    <div class="card-body">
-      <h5 class="card-title">Resultados da Busca</h5>
-      <div class="table-responsive">
-        <table class="table table-bordered table-hover">
-          <thead class="table-light">
-            <tr>
-              <th>OS Nº</th>
-              <th>Local</th>
-              <th>Data</th>
-              <th># Serviços</th>
-              <th>Situação</th>
-              <th>Ação</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% if ordens_busca %}
-              {% for os in ordens_busca %}
+      <!-- Tabela - Últimos Serviços -->
+      <div class="card mt-4 order-1 order-md-2">
+        <div class="card-body">
+          <h5 class="card-title d-flex justify-content-between align-items-center">
+            Últimos Serviços Adicionados
+            <a href="#" class="btn btn-outline-primary btn-sm">Ver Todos</a>
+          </h5>
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover table-striped">
+              <thead class="table-light">
                 <tr>
-                  <td>
-                    <a href="{% url 'visualizar_ordem' os.id %}">
-                      {{ os.numero }}
-                    </a>
-                  </td>
-                  <td>{{ os.local.nome }}</td>
-                  <td>{{ os.data_criacao|date:"d/m/Y" }}</td>
-                  <td>{{ os.servicos.count }}</td>
-                  <td>{{ os.get_situacao_display }}</td>
-                  <td>
-                    <a href="{% url 'visualizar_ordem' os.id %}" class="btn btn-sm btn-primary">
-                      Ver
-                    </a>
-                  </td>
+                  <th>Descrição do Serviço</th>
+                  <th>nº OS</th>
+                  <th>Local</th>
+                  <th>Categoria</th>
+                  <th>Situação do Serviço</th>
                 </tr>
-              {% endfor %}
-            {% else %}
-              <tr>
-                <td colspan="6" class="text-center text-muted">
-                  Nenhuma OS encontrada para esses filtros.
-                </td>
-              </tr>
-            {% endif %}
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                {% for servico in ultimos_servicos %}
+                <tr>
+                  <td><a href="{% url 'ver_ordem_servico' servico.ordem.id %}">{{ servico.descricao|truncatechars:50 }}</a></td>
+                  <td>{{ servico.ordem.numero }}</td>
+                  <td>{{ servico.ordem.local.nome }}</td>
+                  <td>{{ servico.categoria.nome }}</td>
+                  <td>{{ servico.get_situacao_display }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center text-muted">Nenhum serviço cadastrado para este contrato.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-{% endif %}
 
-<!-- Tabela - Últimos Serviços do Contrato -->
-<div class="card mt-4">
-  <div class="card-body">
-    <h5 class="card-title d-flex justify-content-between align-items-center">
-      Últimos Serviços Adicionados
-      <a href="#" class="btn btn-outline-primary btn-sm">Ver Todos</a>
-    </h5>
-    <div class="table-responsive">
-      <table class="table table-bordered table-hover table-striped">
-        <thead class="table-light">
-          <tr>
-            <th>Descrição do Serviço</th>
-            <th>nº OS</th>
-            <th>Local</th>
-            <th>Categoria</th>
-            <th>Situação do Serviço</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for servico in ultimos_servicos %}
-          <tr>
-            <td>
-              <a href="{% url 'ver_ordem_servico' servico.ordem.id %}">
-                {{ servico.descricao|truncatechars:50 }}
-              </a>
-            </td>
-            <td>{{ servico.ordem.numero }}</td>
-            <td>{{ servico.ordem.local.nome }}</td>
-            <td>{{ servico.categoria.nome }}</td>
-            <td>{{ servico.get_situacao_display }}</td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="5" class="text-center text-muted">Nenhum serviço cadastrado para este contrato.</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+      
+      <!-- Cards - Status de Ordens -->
+    <div class="d-flex flex-wrap gap-3 mb-4 status-cards-container">
+      <div class="card bg-secondary text-white status-card"><div class="card-body"><h3>{{ status_counts.nao_iniciado }}</h3><p>Não Iniciado</p><i class="fa fa-circle card-icon"></i></div></div>
+      <div class="card bg-primary text-white status-card"><div class="card-body"><h3>{{ status_counts.em_andamento }}</h3><p>Em Andamento</p><i class="fa fa-spinner card-icon"></i></div></div>
+      <div class="card bg-warning text-dark status-card"><div class="card-body"><h3>{{ status_counts.pendente }}</h3><p>Pendente/Paralisado</p><i class="fa fa-pause-circle card-icon"></i></div></div>
+      <div class="card bg-danger text-white status-card"><div class="card-body"><h3>{{ status_counts.cancelado }}</h3><p>Cancelado</p><i class="fa fa-times-circle card-icon"></i></div></div>
+      <div class="card bg-success text-white status-card"><div class="card-body"><h3>{{ status_counts.finalizado }}</h3><p>Finalizado</p><i class="fa fa-check-circle card-icon"></i></div></div>
     </div>
+
+    </div>
+
+    <!-- Rodapé -->
+    <div class="text-center mt-5 mb-3 text-muted small">
+      Logado como: <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+      <form method="POST" action="{% url 'logout' %}" class="d-inline ms-2">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-link text-danger p-0" title="Sair">
+          <i class="fa fa-sign-out-alt"></i>
+        </button>
+      </form>
+    </div>
+
   </div>
 </div>
 
+<!-- MENU INFERIOR PARA CELULAR -->
+<nav class="mobile-nav d-md-none">
+  <a href="{% url 'contratos' %}" class="{% if request.resolver_match.url_name == 'contratos' %}active{% endif %}">
+    <i class="fa fa-file-alt"></i>Contratos
+  </a>
+  <a href="{% url 'criar_ordem_servico' %}" class="{% if request.resolver_match.url_name == 'criar_ordem_servico' %}active{% endif %}">
+    <i class="fa fa-plus-circle"></i>Inserir
+  </a>
+  <a href="#" class="{% if request.resolver_match.url_name == 'buscar_os' %}active{% endif %}">
+    <i class="fa fa-search"></i>Buscar
+  </a>
+  <a href="#" class="{% if request.resolver_match.url_name == 'menu_mobile' %}active{% endif %}">
+    <i class="fa fa-bars"></i>Menu
+  </a>
+</nav>
 
-
-
-    <!-- Rodapé do usuário logado com botão de logout via POST -->
-<div class="text-center mt-5 mb-3 text-muted small">
-  Logado como: <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
-  
-  <form method="POST" action="{% url 'logout' %}" class="d-inline ms-2">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-link text-danger p-0" title="Sair">
-      <i class="fa fa-sign-out-alt"></i>
-    </button>
-  </form>
-</div>
-
-  </div> <!-- end main-content -->
-
-</div> <!-- end wrapper -->
-
-<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

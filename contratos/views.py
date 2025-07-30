@@ -77,15 +77,25 @@ def dashboard_contrato(request, id):
         "finalizado": OrdemServico.objects.filter(contrato=contrato, situacao="finalizado").count(),
     }
 
-    # Últimos 10 serviços desse contrato
+    status_info = {
+        "nao_iniciado": {"label": "Não Iniciado", "color": "secondary", "icon": "circle"},
+        "em_andamento": {"label": "Em Andamento", "color": "primary", "icon": "spinner"},
+        "pendente": {"label": "Pendente/Paralisado", "color": "warning text-dark", "icon": "pause-circle"},
+        "cancelado": {"label": "Cancelado", "color": "danger", "icon": "times-circle"},
+        "finalizado": {"label": "Finalizado", "color": "success", "icon": "check-circle"},
+    }
+
+    status_list = list(status_info.keys())
+
     ultimos_servicos = Servico.objects.filter(
         ordem__contrato=contrato
     ).select_related('ordem__local', 'categoria').order_by('-id')[:10]
 
-
     context = {
         'contrato': contrato,
         'status_counts': status_counts,
+        'status_info': status_info,
+        'status_list': status_list,
         'ultimos_servicos': ultimos_servicos,
     }
 
