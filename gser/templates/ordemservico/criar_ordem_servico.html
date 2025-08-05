@@ -1,12 +1,13 @@
-{% load widget_tweaks %}
+{% extends "mobile_menu_base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Nova Ordem de Serviço</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+{% load widget_tweaks %}
+
+{% block title %}Nova Ordem de Serviço{% endblock %}
+
+{% block extra_head %}
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
   <style>
     .card {
       margin-bottom: 1.5rem;
@@ -26,8 +27,9 @@
       }
     }
   </style>
-</head>
-<body>
+{% endblock %}
+
+{% block content %}
 <div class="container py-4">
 
   {% if messages %}
@@ -41,32 +43,35 @@
 
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h4><i class="fa fa-plus-circle"></i> Nova Ordem de Serviço</h4>
-    <a href="{% url 'dashboard_contrato' request.session.contrato_id %}" class="btn btn-outline-secondary">
-      <i class="fa fa-arrow-left"></i> Voltar
-    </a>
-  </div>
-<form method="post" class="card card-body shadow-sm">
-    {% csrf_token %}
-  <!-- Card de Informações do Contrato -->
-  <div class="card shadow-sm mb-4">
-    <div class="card-body row g-3">
-      <div class="col-md-4">
-        <label for="id_numero" class="form-label">Número da OS</label>
-        {{ form.numero|add_class:"form-control" }}
-      </div>
-      <div class="col-md-8">
-        <label class="form-label">Contrato</label>
-        <input type="text" class="form-control" value="{{ contrato.numero }} - {{ contrato.empresa_contratada }} / {{ contrato.orgao_contratante }}" readonly>
-      </div>
-    </div>
+    <a href="{% url 'dashboard_contrato' request.session.contrato_id %}" class="btn btn-outline-secondary d-none d-md-inline">
+  <i class="fa fa-arrow-left"></i> Voltar
+</a>
   </div>
 
-  
+  <form method="post" class="card card-body shadow-sm">
+    {% csrf_token %}
+
+    <!-- Card: Dados da OS -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-body row g-3">
+        <div class="col-md-4">
+          <label for="id_numero" class="form-label">Número da OS</label>
+          {{ form.numero|add_class:"form-control" }}
+        </div>
+        
+        <div class="col-md-8">
+          <label class="form-label">Contrato</label>
+          {{ form.contrato|add_class:"form-select" }}
+        </div>
+
+      </div>
+    </div>
+
     <div class="row">
 
       <div class="col-md-6 mb-3">
         <label for="id_local" class="form-label">Local</label>
-        {{ form.local|add_class:"form-control" }}
+        {{ form.local|add_class:"form-select select2" }}
       </div>
 
       <div class="col-md-6 mb-3">
@@ -99,46 +104,51 @@
         {{ form.observacao|add_class:"form-control" }}
       </div>
     </div>
-      {{form.errors}}
+
+    {{ form.errors }}
+
     <div class="btn-group-mobile d-md-flex justify-content-end gap-2">
       <button type="submit" class="btn btn-primary">
         <i class="fa fa-save"></i> Salvar
+      </button>
     </div>
   </form>
 </div>
+{% endblock %}
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% block extra_scripts %}
+<!-- jQuery (necessário para Select2) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const situacaoField = document.getElementById('id_situacao');
+  $(document).ready(function () {
+    // Inicializa os campos select com Select2
+    $('.select2').select2({
+      width: '100%',
+      theme: 'bootstrap-5',
+      placeholder: 'Selecione uma opção',
+      allowClear: true
+    });
 
-    const dataParalisado = document.getElementById('id_data_paralisado');
-    const motivoParalisado = document.getElementById('id_motivo_pendente_paralisado');
-    const dataTermino = document.getElementById('id_data_termino');
-
-    const grupoDataParalisado = document.getElementById('grupo-data-paralisado');
-    const grupoMotivoParalisado = document.getElementById('grupo-motivo');
-    const grupoDataTermino = document.getElementById('grupo-data-termino');
-
+    // Lógica para exibir/esconder campos de acordo com a situação
     function atualizarCampos() {
-      const situacao = situacaoField.value;
+      const situacao = $('#id_situacao').val();
 
-      // Mostrar Data Paralisado e Motivo se for pendente ou paralisado
       const mostrarParalisado = situacao === 'pendente' || situacao === 'paralisado';
-      grupoDataParalisado.style.display = mostrarParalisado ? '' : 'none';
-      grupoMotivoParalisado.style.display = mostrarParalisado ? '' : 'none';
-      dataParalisado.disabled = !mostrarParalisado;
-      motivoParalisado.disabled = !mostrarParalisado;
+      $('#grupo-data-paralisado, #grupo-motivo').toggle(mostrarParalisado);
+      $('#id_data_paralisado, #id_motivo_pendente_paralisado').prop('disabled', !mostrarParalisado);
 
-      // Mostrar Data Término apenas se for finalizado
       const mostrarTermino = situacao === 'finalizado';
-      grupoDataTermino.style.display = mostrarTermino ? '' : 'none';
-      dataTermino.disabled = !mostrarTermino;
+      $('#grupo-data-termino').toggle(mostrarTermino);
+      $('#id_data_termino').prop('disabled', !mostrarTermino);
     }
 
-    situacaoField.addEventListener('change', atualizarCampos);
-    atualizarCampos(); // chamada inicial
+    $('#id_situacao').on('change', atualizarCampos);
+    atualizarCampos();
   });
 </script>
-</body>
-</html>
+{% endblock %}
+

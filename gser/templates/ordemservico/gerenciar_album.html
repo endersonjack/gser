@@ -1,0 +1,124 @@
+{% extends "mobile_menu_base.html" %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Gerenciar Álbum{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Cabeçalho -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="fa fa-image me-2"></i> Gerenciar Álbum: {{ album.nome }}</h4>
+    <a href="{% url 'listar_albuns' album.servico.ordem.id album.servico.id %}" class="btn btn-outline-secondary d-none d-md-inline">
+      <i class="fa fa-arrow-left"></i> Voltar aos Álbuns
+    </a>
+  </div>
+
+  <!-- 📱 Mobile: dois formulários separados -->
+  <div class="d-block d-md-none">
+    <div class="mb-3">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="imagem" accept="image/*" capture="environment" class="d-none" id="camera-input">
+        <input type="hidden" name="legenda" value="">
+        <button type="button" class="btn btn-outline-primary w-100 mb-2" onclick="document.getElementById('camera-input').click();">
+          <i class="fa fa-camera"></i> Tirar Foto com a Câmera
+        </button>
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="fa fa-upload"></i> Enviar
+        </button>
+      </form>
+    </div>
+
+    <div class="mb-4">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="imagem" accept="image/*" class="form-control mb-2" required>
+        <input type="text" name="legenda" class="form-control" placeholder="Legenda (opcional)">
+        <button type="submit" class="btn btn-success w-100 mt-2">
+          <i class="fa fa-image"></i> Fazer Upload da Galeria
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 💻 Desktop: formulário único -->
+  <div class="d-none d-md-block mb-4">
+    <form method="post" enctype="multipart/form-data" class="card card-body shadow-sm">
+      {% csrf_token %}
+      <div class="mb-3">
+        <label class="form-label">Selecionar Imagem</label>
+        {{ form.imagem|add_class:"form-control" }}
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Legenda (opcional)</label>
+        {{ form.legenda|add_class:"form-control" }}
+      </div>
+      <div class="text-end">
+        <button type="submit" class="btn btn-primary">
+          <i class="fa fa-upload"></i> Adicionar Foto
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Lista de Fotos -->
+  <div class="card shadow-sm">
+    <div class="card-header bg-light">
+      <strong>Fotos no Álbum</strong>
+    </div>
+    <div class="card-body">
+      {% if fotos %}
+        <div class="row">
+          {% for foto in fotos %}
+            
+          
+
+            <div class="col-6 col-md-3 mb-4 text-center">
+
+  <!-- Imagem com clique para modal -->
+  <a href="#" data-bs-toggle="modal" data-bs-target="#fotoModal{{ foto.id }}">
+    <img src="{{ foto.imagem.url }}" alt="Foto" class="img-fluid rounded mb-2" />
+  </a>
+
+  {% if foto.legenda %}
+    <p class="small text-muted">{{ foto.legenda }}</p>
+  {% endif %}
+
+  <!-- Botão excluir -->
+  <form method="post" action="{% url 'excluir_foto' foto.id %}" onsubmit="return confirm('Deseja excluir esta foto?');">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-sm btn-outline-danger">
+      <i class="fa fa-trash"></i> Excluir
+    </button>
+  </form>
+
+  <!-- Modal -->
+  <div class="modal fade" id="fotoModal{{ foto.id }}" tabindex="-1" aria-labelledby="modalLabel{{ foto.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalLabel{{ foto.id }}">{{ foto.legenda|default:"" }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body text-center">
+          <img src="{{ foto.imagem.url }}" alt="Foto ampliada" class="img-fluid rounded">
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-muted">Nenhuma foto neste álbum ainda.</p>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

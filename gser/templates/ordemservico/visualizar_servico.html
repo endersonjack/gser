@@ -1,25 +1,20 @@
+{% extends "mobile_menu_base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Detalhes do Serviço</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body>
 
-<div class="container my-5">
-  <!-- Cabeçalho com Número do Contrato/OS, Select de Situação, Botões Editar e Excluir -->
+{% block title %}Detalhes do Serviço{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Cabeçalho (desktop) -->
   <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
-      <!-- Esquerda: Contrato e OS -->
       <div>
         <h5 class="mb-0">Contrato #{{ ordem.contrato.numero }} - OS #{{ ordem.numero }}</h5>
       </div>
-      <!-- Direita: Situação, Editar e Excluir -->
-      <div class="d-flex align-items-center">
-        <!-- Formulário de Situação -->
+
+      <!-- Situação e editar: desktop -->
+      <div class="d-none d-md-flex align-items-center">
         <form method="post" class="d-flex align-items-center me-2">
           {% csrf_token %}
           <label for="situacao" class="me-1 mb-0">Situação:</label>
@@ -30,22 +25,33 @@
           </select>
           <button type="submit" class="btn btn-sm btn-outline-primary">Salvar</button>
         </form>
-        <!-- Botão Editar -->
+
         <a href="{% url 'editar_servico' ordem.id servico.id %}" class="btn btn-sm btn-primary me-2">
           <i class="fa fa-edit"></i> Editar
         </a>
-        <!-- Botão Excluir com confirmação -->
-        <form method="post" action="{% url 'excluir_servico' ordem.id servico.id %}" onsubmit="return confirm('Tem certeza que deseja excluir este serviço?');">
-          {% csrf_token %}
-          <button type="submit" class="btn btn-sm btn-danger">
-            <i class="fa fa-trash"></i> Excluir
-          </button>
-        </form>
       </div>
     </div>
   </div>
 
-  <!-- Detalhes do Serviço -->
+  <!-- Situação: mobile -->
+  <div class="d-block d-md-none mb-4">
+    <form method="post">
+      {% csrf_token %}
+      <label for="situacao" class="form-label">Situação do Serviço:</label>
+      <div class="d-flex gap-2">
+        <select name="situacao" id="situacao" class="form-select">
+          {% for key, label in situacao_choices %}
+            <option value="{{ key }}" {% if servico.situacao == key %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-outline-primary">
+          <i class="fa fa-save"></i>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Card de Detalhes do Serviço -->
   <div class="card mb-4">
     <div class="card-body">
       <h5 class="card-title">{{ servico.descricao }}</h5>
@@ -56,30 +62,103 @@
     </div>
   </div>
 
-  <!-- Card de Fotos -->
-  <div class="card mb-4">
-    <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
-      <strong>Fotos Associadas</strong>
-      <a href="#" class="btn btn-light btn-sm">
-        <i class="fa fa-plus-circle"></i> Adicionar Foto
-      </a>
-    </div>
-    <div class="card-body">
-      {% if servico.fotos.exists %}
-        <div class="row">
-          {% for foto in servico.fotos.all %}
-            <div class="col-6 col-md-3 mb-3">
-              <img src="{{ foto.imagem.url }}" class="img-fluid rounded" alt="Foto do serviço">
+  <!-- Editar: mobile -->
+  <div class="d-md-none mb-4">
+    <a href="{% url 'editar_servico' ordem.id servico.id %}" class="btn btn-primary w-100">
+      <i class="fa fa-edit"></i> Editar Serviço
+    </a>
+  </div>
+
+  <!-- Fotos Associadas -->
+<div class="card mb-4">
+  <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+    <strong>Fotos Associadas</strong>
+    <a href="{% url 'listar_albuns' ordem.id servico.id %}" class="btn btn-light btn-sm">
+      <i class="fa fa-plus-circle"></i> Adicionar Foto
+    </a>
+  </div>
+  <div class="card-body">
+    {% if servico.albuns.exists %}
+      <div class="row">
+        {% for album in servico.albuns.all %}
+          <div class="col-12 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+              <div class="card-body">
+                <h5 class="card-title text-warning">
+                  <i class="fa fa-folder-open me-2"></i>{{ album.nome }}
+                </h5>
+                <p class="text-muted small mb-2">{{ album.descricao }}</p>
+
+                {% if album.fotos.exists %}
+                  <div class="row g-2 mb-3">
+                    {% for foto in album.fotos.all|slice:":4" %}
+                      <div class="col-3">
+                        <img src="{{ foto.imagem.url }}" class="img-fluid rounded" alt="Foto">
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% else %}
+                  <p class="text-muted">Nenhuma foto adicionada.</p>
+                {% endif %}
+
+                <a href="{% url 'gerenciar_album' ordem.id servico.id album.id %}" class="btn btn-outline-primary btn-sm">
+                  <i class="fa fa-edit"></i> Gerenciar Álbum
+                </a>
+              </div>
             </div>
-          {% endfor %}
-        </div>
-      {% else %}
-        <p class="text-muted">Nenhuma foto associada a este serviço.</p>
-      {% endif %}
-    </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-muted">Nenhum álbum cadastrado para este serviço.</p>
+    {% endif %}
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+
+  <!-- Outros Serviços da OS -->
+  <div class="card mb-4">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+      <strong>Outros Serviços da OS</strong>
+    </div>
+    <div class="card-body">
+        {% if outros_servicos %}
+          <div class="table-responsive">
+            <table class="table table-striped align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>#</th>
+                  <th>Descrição</th>
+                  <th>Categoria</th>
+                  <th>Situação</th>
+                  <th>Quantidade</th>
+                  <th>Observação</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for s in outros_servicos %}
+                <tr>
+                  <td>{{ forloop.counter }}</td>
+                  <td>
+                    <a href="{% url 'visualizar_servico' ordem.id s.id %}" class="text-decoration-none text-primary">
+                      {{ s.descricao }}
+                    </a>
+                  </td>
+                  <td>{{ s.categoria.nome }}</td>
+                  <td>{{ s.get_situacao_display }}</td>
+                  <td>{{ s.quantidade }}</td>
+                  <td>{{ s.observacao }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <p class="text-muted">Nenhum outro serviço registrado nesta OS.</p>
+        {% endif %}
+      
+    </div>
+  </div>
+
+</div>
+{% endblock %}

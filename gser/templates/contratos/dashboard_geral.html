@@ -1,10 +1,11 @@
 
+
 {% extends "mobile_menu_base.html" %}
 {% load static %}
 {% block extra_head %}
   <style>
-    body { margin: 0; padding: 0; }
-    .wrapper { display: flex; flex-direction: row; height: 100vh; overflow: hidden; }
+    body { margin: 0; padding: 0; overflow-x: hidden; background-color: #f8f9fa; }
+    .wrapper { display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
     .sidebar { width: 260px; background-color: #343a40; color: #fff; padding: 15px 0; flex-shrink: 0; max-height: 100vh; overflow-y: auto; }
     .sidebar a { color: #fff; display: block; padding: 10px 20px; text-decoration: none; }
     .sidebar a.active, .sidebar a:hover { background-color: #007bff; }
@@ -13,8 +14,8 @@
     .status-card { height: 120px; display: flex; flex-direction: column; justify-content: center; position: relative; min-width: 180px; flex: 1 1 auto; }
     .status-card .card-body { flex: 1; display: flex; flex-direction: column; justify-content: center; }
     @media (max-width: 768px) {
-      .wrapper { flex-direction: column; height: auto; }
-      .sidebar { width: 100%; height: auto; display: flex; flex-wrap: wrap; justify-content: center; }
+      .wrapper { flex-direction: column; height: auto; } 
+      .sidebar { display: none !important; }
       .main-content { padding: 15px; height: auto; }
       .status-cards-container { flex-wrap: wrap; gap: 10px; justify-content: center; }
       .status-card { min-width: 48%; }
@@ -24,23 +25,23 @@
 {% endblock %}
 
  {% block content %}
-
+ <div class="wrapper flex-column flex-md-row">
   <!-- SIDEBAR -->
-<div class="sidebar bg-dark p-2" style="min-height: 100vh;">
+<div class="sidebar bg-dark p-2" >
 
-  <a href="{% url 'contratos' %}" class="d-block py-2 px-3 text-white text-decoration-none">
+  <a href="{% url 'contratos' %}" class="d-none d-md-block py-2 px-3 text-white text-decoration-none">
     <i class="fa fa-arrow-left me-2"></i> Contratos
   </a>
 
-  <a href="{% url 'criar_ordem_servico' %}" class="btn btn-success btn-sm w-100 text-start my-2">
+  <a href="{% url 'criar_ordem_servico' %}" class="btn btn-success btn-sm w-100 text-start my-2 d-none d-md-block">
     <i class="fa fa-plus-circle me-2"></i> Inserir OS
   </a>
 
-  <a href="#" class="d-block py-2 px-3 text-white text-decoration-none">
+  <a href="#" class="d-none d-md-block py-2 px-3 text-white text-decoration-none">
     <i class="fa fa-search me-2"></i> Pesquisar OS
   </a>
 
-  <a href="#" class="d-block py-2 px-3 text-white text-decoration-none">
+  <a href="#" class="d-none d-md-block py-2 px-3 text-white text-decoration-none">
     <i class="fa fa-search me-2"></i> Pesquisar Serviço
   </a>
 
@@ -144,6 +145,17 @@
 
 
 
+<!-- Rodapé -->
+    <div class="text-center mt-5 mb-3 text-muted small">
+      Logado como: <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+      <form method="POST" action="{% url 'logout' %}" class="d-inline ms-2">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-link text-danger p-0" title="Sair">
+          <i class="fa fa-sign-out-alt"></i>
+        </button>
+      </form>
+    </div>
+
 
 
 
@@ -151,4 +163,5 @@
 
   </div>
 </div>
+
 {% endblock %}

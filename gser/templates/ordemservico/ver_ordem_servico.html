@@ -1,131 +1,92 @@
+{% extends "mobile_menu_base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Visualizar Ordem de Serviço</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-  <style>
-    @media (max-width: 768px) {
-      .card-title {
-        font-size: 1.1rem;
-      }
-      .btn-group-mobile {
-        flex-direction: column;
-        gap: 10px;
-      }
-    }
-  </style>
-</head>
-<body>
+
+{% block title %}Visualizar Ordem de Serviço{% endblock %}
+
+{% block content %}
 <div class="container py-4">
 
   <!-- Cabeçalho -->
   <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h4><i class="fa fa-file-alt me-2"></i> Detalhes: Ordem de Serviço nº {{ ordem.numero }}</h4>
-    <a href="{% url 'dashboard_contrato' ordem.contrato.id %}" class="btn btn-outline-secondary">
+    <a href="{% url 'dashboard_contrato' ordem.contrato.id %}" class="btn btn-outline-secondary d-none d-md-inline">
       <i class="fa fa-arrow-left"></i> Voltar ao Contrato
     </a>
   </div>
 
   <!-- Dados da OS -->
-<div class="card mb-4">
-  <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-    <strong>Dados da Ordem de Serviço</strong>
-    <a href="{% url 'editar_ordem_servico' ordem.id %}" class="btn btn-light btn-sm">
-      <i class="fa fa-pen"></i> Editar OS
-    </a>
+  <div class="card mb-4">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+      <strong>Dados da Ordem de Serviço</strong>
+      <a href="{% url 'editar_ordem_servico' ordem.id %}" class="btn btn-light btn-sm">
+        <i class="fa fa-pen"></i> Editar OS
+      </a>
+    </div>
+    <div class="card-body">
+      <p><strong>Contrato:</strong> {{ ordem.contrato.numero }}</p>
+      <p><strong>Local:</strong> {{ ordem.local.nome }}</p>
+      <p><strong>Data Início:</strong> {{ ordem.data_inicio|date:"d/m/Y" }}</p>
+      {% if ordem.data_termino %}
+        <p><strong>Data Término:</strong> {{ ordem.data_termino|date:"d/m/Y" }}</p>
+      {% endif %}
+      {% if ordem.data_paralisado %}
+        <p><strong>Data Paralisado:</strong> {{ ordem.data_paralisado|date:"d/m/Y" }}</p>
+        <p><strong>Motivo:</strong> {{ ordem.motivo_pendente_paralisado }}</p>
+      {% endif %}
+      <p><strong>Situação:</strong> {{ ordem.get_situacao_display }}</p>
+      {% if ordem.observacao %}
+        <p><strong>Observações:</strong> {{ ordem.observacao }}</p>
+      {% endif %}
+    </div>
   </div>
-  <div class="card-body">
-    <p><strong>Contrato:</strong> {{ ordem.contrato.numero }}</p>
-    <p><strong>Local:</strong> {{ ordem.local.nome }}</p>
-    <p><strong>Data Início:</strong> {{ ordem.data_inicio|date:"d/m/Y" }}</p>
-    {% if ordem.data_termino %}
-      <p><strong>Data Término:</strong> {{ ordem.data_termino|date:"d/m/Y" }}</p>
-    {% endif %}
-    {% if ordem.data_paralisado %}
-      <p><strong>Data Paralisado:</strong> {{ ordem.data_paralisado|date:"d/m/Y" }}</p>
-      <p><strong>Motivo:</strong> {{ ordem.motivo_pendente_paralisado }}</p>
-    {% endif %}
-    <p><strong>Situação:</strong> {{ ordem.get_situacao_display }}</p>
-    {% if ordem.observacao %}
-      <p><strong>Observações:</strong> {{ ordem.observacao }}</p>
-    {% endif %}
-  </div>
-</div>
 
+  <!-- Serviços -->
+  <div class="card mb-4">
+    <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+      <strong>Serviços Associados</strong>
+      <a href="{% url 'adicionar_servicos_ordem' ordem.id %}" class="btn btn-light btn-sm">
+        <i class="fa fa-plus-circle"></i> Adicionar Serviço
+      </a>
+    </div>
 
-<!-- Serviços -->
-<div class="card mb-4">
-  <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
-    <strong>Serviços Associados</strong>
-    
-    <a href="{% url 'adicionar_servicos_ordem' ordem.id %}" class="btn btn-light btn-sm">
-      <i class="fa fa-plus-circle"></i> Adicionar Serviço
-    </a>
-  </div>
-  
-  <div class="card-body">
-    <small>Clique para visualizar serviço </small>
-    {% if ordem.servicos.exists %}
-      <div class="table-responsive">
-        <table class="table table-striped align-middle">
-          <thead class="table-light">
-            <tr>
-              <th>Descrição</th>
-              <th>Categoria</th>
-              <th>Situação</th>
-              <th>Quantidade</th>
-              <th>Observação</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for servico in ordem.servicos.all %}
-              <tr class="clickable-row" style="cursor: pointer;"
-                  data-href="{% url 'visualizar_servico' ordem.id servico.id %}">
-                <td style="white-space: normal;">
-                  {{ servico.descricao }}
-                </td>
-                <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
-                    title="{{ servico.categoria.nome }}">
-                  {{ servico.categoria.nome }}
-                </td>
-                <td style="max-width:150px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
-                    title="{{ servico.get_situacao_display }}">
-                  {{ servico.get_situacao_display }}
-                </td>
-                <td style="max-width:150px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
-                    title="{{ servico.quantidade }}">
-                  {{ servico.quantidade }}
-                </td>
-                <td style="max-width:250px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
-                    title="{{ servico.observacao }}">
-                  {{ servico.observacao }}
-                </td>
+    <div class="card-body">
+      <small>Clique na descrição para visualizar o serviço</small>
+      {% if ordem.servicos.exists %}
+        <div class="table-responsive mt-3">
+          <table class="table table-striped align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>#</th>
+                <th>Descrição</th>
+                <th>Categoria</th>
+                <th>Situação</th>
+                <th>Quantidade</th>
+                <th>Observação</th>
               </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    {% else %}
-      <p class="text-muted">Nenhum serviço adicionado.</p>
-    {% endif %}
+            </thead>
+            <tbody>
+              {% for servico in ordem.servicos.all %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>
+                  <a href="{% url 'visualizar_servico' ordem.id servico.id %}" class="text-decoration-none text-primary">
+                    {{ servico.descricao }}
+                  </a>
+                </td>
+                <td title="{{ servico.categoria.nome }}">{{ servico.categoria.nome }}</td>
+                <td title="{{ servico.get_situacao_display }}">{{ servico.get_situacao_display }}</td>
+                <td title="{{ servico.quantidade }}">{{ servico.quantidade }}</td>
+                <td title="{{ servico.observacao }}">{{ servico.observacao }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-muted">Nenhum serviço adicionado.</p>
+      {% endif %}
+    </div>
   </div>
-</div>
-
-<!-- Script para redirecionar ao clicar na linha -->
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('tr.clickable-row').forEach(function(row) {
-      row.addEventListener('click', function() {
-        window.location.href = row.dataset.href;
-      });
-    });
-  });
-</script>
 
 </div>
-</body>
-</html>
+{% endblock %}

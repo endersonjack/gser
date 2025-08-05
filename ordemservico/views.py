@@ -7,7 +7,8 @@ from django.contrib import messages
 from .models import OrdemServico, Servico
 from .forms import OrdemServicoForm, ServicoForm, OrdemServicoEditForm
 from django.forms import inlineformset_factory
-from contratos.models import Contrato
+from .models import Album, Foto, OrdemServico, Servico
+from .forms import AlbumForm, FotoForm
 
 @login_required
 def listar_categorias(request):
@@ -53,32 +54,19 @@ def excluir_categoria(request, categoria_id):
 
 @login_required
 def criar_ordem_servico(request):
-    contrato_id = request.session.get('contrato_id')
-
-    if not contrato_id:
-        messages.error(request, "Contrato não selecionado.")
-        return redirect('contratos')
-
-    contrato = get_object_or_404(Contrato, id=contrato_id)
-
     if request.method == 'POST':
         form = OrdemServicoForm(request.POST)
         if form.is_valid():
-            ordem = form.save(commit=False)
-            ordem.contrato = contrato  # garante contrato da sessão
-            ordem.save()
+            ordem = form.save()
             messages.success(request, "Ordem de serviço criada com sucesso.")
             return redirect('ver_ordem_servico', ordem.id)
     else:
-        form = OrdemServicoForm(initial={
-            'contrato': contrato,
-            'situacao': 'nao_iniciado'
-        })
+        form = OrdemServicoForm(initial={'situacao': 'nao_iniciado'})
 
     return render(request, 'ordemservico/criar_ordem_servico.html', {
         'form': form,
-        'contrato': contrato
     })
+
 
 
 @login_required
@@ -183,8 +171,9 @@ def visualizar_servico(request, ordem_id, servico_id):
     ordem = get_object_or_404(OrdemServico, id=ordem_id)
     servico = get_object_or_404(Servico, id=servico_id, ordem=ordem)
 
-    # Extrai as choices do campo “situacao”
     situacao_choices = Servico._meta.get_field('situacao').choices
+
+    outros_servicos = ordem.servicos.exclude(id=servico.id)
 
     if request.method == 'POST':
         nova = request.POST.get('situacao')
@@ -197,7 +186,9 @@ def visualizar_servico(request, ordem_id, servico_id):
         'ordem': ordem,
         'servico': servico,
         'situacao_choices': situacao_choices,
+        'outros_servicos': outros_servicos,  # ← Aqui!
     })
+
 
 def excluir_servico(request, ordem_id, servico_id):
     servico = get_object_or_404(Servico, id=servico_id, ordem__id=ordem_id)
@@ -208,3 +199,64 @@ def excluir_servico(request, ordem_id, servico_id):
     # Se quiser, você pode renderizar uma página de confirmação;  
     # mas como já há confirmação em JS, apenas redirecione:
     return redirect('ordemservico/visualizar_servico', ordem_id=ordem_id, servico_id=servico_id)
+
+
+
+###########FOTOS###########
+
+@login_required
+def listar_albuns(request, ordem_id, servico_id):
+    ordem = get_object_or_404(OrdemServico, id=ordem_id)
+    servico = get_object_or_404(Servico, id=servico_id, ordem=ordem)
+    albuns = servico.albuns.all()
+    return render(request, 'ordemservico/adicionar_fotos.html', {
+        'ordem': ordem,
+        'servico': servico,
+        'albuns': albuns
+    })
+
+@login_required
+def criar_album(request, ordem_id, servico_id):
+    servico = get_object_or_404(Servico, id=servico_id, ordem_id=ordem_id)
+    if request.method == 'POST':
+        form = AlbumForm(request.POST)
+        if form.is_valid():
+            album = form.save(commit=False)
+            album.servico = servico
+            album.save()
+            messages.success(request, "Álbum criado com sucesso.")
+            return redirect('listar_albuns', ordem_id=ordem_id, servico_id=servico_id)
+    else:
+        form = AlbumForm()
+    return render(request, 'ordemservico/criar_album.html', {
+        'form': form,
+        'servico': servico
+    })
+
+@login_required
+def gerenciar_album(request, ordem_id, servico_id, album_id):
+    album = get_object_or_404(Album, id=album_id, servico__id=servico_id, servico__ordem_id=ordem_id)
+    if request.method == 'POST':
+        form = FotoForm(request.POST, request.FILES)
+        if form.is_valid():
+            foto = form.save(commit=False)
+            foto.album = album
+            foto.save()
+            messages.success(request, "Foto adicionada com sucesso.")
+            return redirect('gerenciar_album', ordem_id=ordem_id, servico_id=servico_id, album_id=album_id)
+    else:
+        form = FotoForm()
+
+    return render(request, 'ordemservico/gerenciar_album.html', {
+        'album': album,
+        'form': form,
+        'fotos': album.fotos.all()
+    })
+
+@login_required
+def excluir_foto(request, foto_id):
+    foto = get_object_or_404(Foto, id=foto_id)
+    album = foto.album
+    foto.delete()
+    messages.success(request, "Foto excluída.")
+    return redirect('gerenciar_album', ordem_id=album.servico.ordem.id, servico_id=album.servico.id, album_id=album.id)

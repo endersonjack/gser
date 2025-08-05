@@ -64,9 +64,20 @@ class Servico(models.Model):
         return f"{self.descricao[:40]}..."
 
 
-class FotoServico(models.Model):
-    servico = models.ForeignKey(Servico, on_delete=models.CASCADE, related_name='fotos')
-    imagem = models.ImageField(upload_to='fotos_servico/')
+class Album(models.Model):
+    servico = models.ForeignKey(Servico, on_delete=models.CASCADE, related_name="albuns")
+    nome = models.CharField(max_length=100)
+    descricao = models.TextField(blank=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Foto de: {self.servico}"
+        return self.nome
+
+class Foto(models.Model):
+    album = models.ForeignKey(Album, on_delete=models.CASCADE, related_name="fotos")
+    imagem = models.ImageField(upload_to="fotos_servico/")
+    legenda = models.CharField(max_length=255, blank=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Foto de {self.album.nome}"

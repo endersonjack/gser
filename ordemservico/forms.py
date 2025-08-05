@@ -1,14 +1,15 @@
 from django import forms
 from django.forms import inlineformset_factory
 from .models import OrdemServico, Servico, Categoria
+from .models import Album, Foto
 
 class OrdemServicoForm(forms.ModelForm):
     class Meta:
         model = OrdemServico
-        fields = ['numero', 'local', 'data_inicio', 'data_termino', 'data_paralisado',
+        fields = ['numero', 'local', 'contrato', 'data_inicio', 'data_termino', 'data_paralisado',
                   'motivo_pendente_paralisado', 'situacao', 'observacao']
         widgets = {
-            # 'contrato': forms.Select(attrs={'class': 'form-select'}),
+            'contrato': forms.Select(attrs={'class': 'form-select'}),
             'numero': forms.TextInput(attrs={'class': 'form-control'}),
             'local': forms.Select(attrs={'class': 'form-select'}),
             'situacao': forms.Select(attrs={'class': 'form-select'}),
@@ -38,8 +39,7 @@ class OrdemServicoEditForm(forms.ModelForm):
             'motivo_pendente_paralisado': forms.Textarea(attrs={'rows': 1, 'class': 'form-control'}),
             'observacao': forms.Textarea(attrs={'rows': 1, 'class': 'form-control'}),
         }
-
-
+       
 
 
 class ServicoForm(forms.ModelForm):
@@ -82,3 +82,13 @@ ServicoFormSet = inlineformset_factory(
     extra=1,
     can_delete=True
 )
+
+class AlbumForm(forms.ModelForm):
+    class Meta:
+        model = Album
+        fields = ['nome', 'descricao']
+
+class FotoForm(forms.ModelForm):
+    class Meta:
+        model = Foto
+        fields = ['imagem', 'legenda']

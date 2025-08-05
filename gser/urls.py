@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.urls import path
 from django.contrib.auth import views as auth_views
-
+from django.conf import settings
+from django.conf.urls.static import static
 from contratos.views import *
 from local.views import listar_locais, editar_local, excluir_local, inserir_local
 from ordemservico.views import *
@@ -33,8 +34,15 @@ urlpatterns = [
     path('ordem/<int:ordem_id>/servico/<int:servico_id>/excluir/', excluir_servico, name='excluir_servico'),
 
  
-
+    path('ordem/<int:ordem_id>/servico/<int:servico_id>/fotos/', listar_albuns, name='listar_albuns'),
+    path('ordem/<int:ordem_id>/servico/<int:servico_id>/fotos/novo/', criar_album, name='criar_album'),
+    path('ordem/<int:ordem_id>/servico/<int:servico_id>/fotos/album/<int:album_id>/', gerenciar_album, name='gerenciar_album'),
+    path('foto/<int:foto_id>/excluir/', excluir_foto, name='excluir_foto'),
 
 
 
 ]
+
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
