@@ -260,3 +260,15 @@ def excluir_foto(request, foto_id):
     foto.delete()
     messages.success(request, "Foto excluída.")
     return redirect('gerenciar_album', ordem_id=album.servico.ordem.id, servico_id=album.servico.id, album_id=album.id)
+
+@require_POST
+@login_required
+def excluir_album(request, album_id):
+    album = get_object_or_404(Album, id=album_id)
+    ordem_id = album.servico.ordem.id
+    servico_id = album.servico.id
+
+    album.delete()
+    messages.success(request, "Álbum e suas fotos foram excluídos com sucesso.")
+
+    return redirect('listar_albuns', ordem_id=ordem_id, servico_id=servico_id)

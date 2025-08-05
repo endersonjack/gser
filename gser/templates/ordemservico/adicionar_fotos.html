@@ -1,18 +1,27 @@
 {% extends "mobile_menu_base.html" %}
 {% load static %}
 
-{% block title %}Álbuns de Fotos - OS #{{ ordem.numero }}{% endblock %}
+{% block title %}Adicionar Fotos ao Serviço{% endblock %}
 
 {% block content %}
 <div class="container py-4">
 
   <!-- Cabeçalho -->
   <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-    <h4 class="mb-0"><i class="fa fa-images me-2"></i> Álbuns de Fotos da OS #{{ ordem.numero }}</h4>
-    <a href="{% url 'ver_ordem_servico' ordem.id %}" class="btn btn-outline-secondary d-none d-md-inline">
-      <i class="fa fa-arrow-left"></i> Voltar à OS
+    <h4 class="mb-0"><i class="fa fa-images me-2"></i> Adicionar Fotos ao Serviço:</h4>
+
+    <!-- Botão Voltar (desktop) -->
+    <a href="{% url 'visualizar_servico' ordem.id servico.id %}" class="btn btn-outline-secondary d-none d-md-inline">
+      <i class="fa fa-arrow-left"></i> Voltar ao Serviço
     </a>
   </div>
+
+  <!-- Card: Descrição do Serviço -->
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="card-title">{{ servico.descricao }}</h5>
+  </div>
+</div>
 
   <!-- Botão: Adicionar Álbum -->
   <div class="mb-4">
@@ -22,49 +31,52 @@
   </div>
 
   <!-- Lista de Álbuns -->
-{% if albuns %}
-  <div class="row">
-    {% for album in albuns %}
-      <div class="col-12 col-md-6 mb-4">
-        <div class="card shadow-sm h-100">
-          <div class="card-body">
-            <h5 class="card-title">
-              <i class="fa fa-folder-open me-1 text-warning"></i>
-              {{ album.nome }}
-            </h5>
-            <p class="text-muted small mb-2">{{ album.descricao }}</p>
+  {% if albuns %}
+    <div class="row">
+      {% for album in albuns %}
+        <div class="col-12 col-md-6 mb-4">
+          <div class="card shadow-sm h-100">
+            <div class="card-body">
+              <h5 class="card-title">
+                <i class="fa fa-folder-open me-1 text-warning"></i>
+                {{ album.nome }}
+              </h5>
+              <p class="text-muted small mb-2">{{ album.descricao }}</p>
 
-            {% with album.fotos.all as fotos_album %}
-              {% if fotos_album %}
-                <div class="row g-2 mb-3">
-                  {% for foto in fotos_album|slice:":3" %}
-                    <div class="col-4">
-                      <img src="{{ foto.imagem.url }}" class="img-fluid rounded" alt="Foto">
-                    </div>
-                  {% endfor %}
-                </div>
-              {% else %}
-                <p class="text-muted">Nenhuma foto adicionada.</p>
-              {% endif %}
-              
-              <!-- Ver mais -->
-              <a href="{% url 'gerenciar_album' ordem.id servico.id album.id %}" class="btn btn-outline-primary btn-sm w-100">
-                Ver e adicionar mais ({{ fotos_album|length }} foto{{ fotos_album|length|pluralize }})
-              </a>
-            {% endwith %}
+              {% with album.fotos.all as fotos_album %}
+                {% if fotos_album %}
+                  <div class="row g-2 mb-3">
+                    {% for foto in fotos_album|slice:":3" %}
+                      <div class="col-4">
+                        <img src="{{ foto.imagem.url }}" class="img-fluid rounded" alt="Foto">
+                      </div>
+                    {% endfor %}
+                  </div>
+                {% else %}
+                  <p class="text-muted">Nenhuma foto adicionada.</p>
+                {% endif %}
 
+                <!-- Ver e adicionar mais -->
+                <a href="{% url 'gerenciar_album' ordem.id servico.id album.id %}" class="btn btn-outline-primary btn-sm w-100">
+                  Ver e adicionar mais ({{ fotos_album|length }} foto{{ fotos_album|length|pluralize }})
+                </a>
+              {% endwith %}
+
+            </div>
           </div>
         </div>
-      </div>
-    {% endfor %}
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-muted">Nenhum álbum cadastrado.</p>
+  {% endif %}
+
+  <!-- Botão Voltar: mobile -->
+  <div class="d-md-none mt-4">
+    <a href="{% url 'visualizar_servico' ordem.id servico.id %}" class="btn btn-outline-secondary w-100">
+      <i class="fa fa-arrow-left"></i> Voltar ao Serviço
+    </a>
   </div>
-{% else %}
-  <p class="text-muted">Nenhum álbum cadastrado.</p>
-{% endif %}
-
-
-
-
 
 </div>
 {% endblock %}

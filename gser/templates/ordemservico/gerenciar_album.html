@@ -10,9 +10,22 @@
   <!-- Cabeçalho -->
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="mb-0"><i class="fa fa-image me-2"></i> Gerenciar Álbum: {{ album.nome }}</h4>
-    <a href="{% url 'listar_albuns' album.servico.ordem.id album.servico.id %}" class="btn btn-outline-secondary d-none d-md-inline">
-      <i class="fa fa-arrow-left"></i> Voltar aos Álbuns
-    </a>
+    
+    <!-- Topo: Voltar + Excluir (desktop) -->
+<div class="d-none d-md-flex justify-content-between align-items-center mb-4">
+  <a href="{% url 'listar_albuns' album.servico.ordem.id album.servico.id %}" class="btn btn-outline-secondary">
+    <i class="fa fa-arrow-left"></i> Voltar aos Álbuns
+  </a>
+
+  <form method="post" action="{% url 'excluir_album' album.id %}"
+        onsubmit="return confirm('Tem certeza que deseja excluir este álbum e todas as fotos nele?');">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-outline-danger">
+      <i class="fa fa-trash"></i> Excluir Álbum
+    </button>
+  </form>
+</div>
+
   </div>
 
   <!-- 📱 Mobile: dois formulários separados -->
@@ -118,6 +131,26 @@
         <p class="text-muted">Nenhuma foto neste álbum ainda.</p>
       {% endif %}
     </div>
+  </div>
+
+
+  <!-- Botão excluir no mobile -->
+<div class="d-md-none mt-4">
+  <form method="post" action="{% url 'excluir_album' album.id %}"
+        onsubmit="return confirm('Tem certeza que deseja excluir este álbum e todas as fotos nele?');">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger w-100">
+      <i class="fa fa-trash"></i> Excluir Álbum
+    </button>
+  </form>
+</div>
+
+
+  <!-- Botão Voltar: mobile -->
+  <div class="d-md-none mt-4">
+    <a href="{% url 'listar_albuns' album.servico.ordem.id album.servico.id %}" class="btn btn-outline-secondary w-100">
+        <i class="fa fa-arrow-left"></i> Voltar
+      </a>
   </div>
 
 </div>

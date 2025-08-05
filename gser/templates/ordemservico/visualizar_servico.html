@@ -6,19 +6,22 @@
 {% block content %}
 <div class="container py-4">
 
-  <!-- Cabeçalho (desktop) -->
-  <div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-      <div>
-        <h5 class="mb-0">Contrato #{{ ordem.contrato.numero }} - OS #{{ ordem.numero }}</h5>
-      </div>
+  <!-- Cabeçalho da OS -->
+<div class="card mb-4">
+  <div class="card-header">
+    <div class="d-flex justify-content-between flex-wrap gap-2 align-items-start">
 
-      <!-- Situação e editar: desktop -->
-      <div class="d-none d-md-flex align-items-center">
-        <form method="post" class="d-flex align-items-center me-2">
+      <!-- Título -->
+      <h5 class="mb-0">Contrato #{{ ordem.contrato.numero }} - OS #{{ ordem.numero }}</h5>
+
+      <!-- Botões topo (apenas desktop) -->
+      <div class="d-none d-md-flex flex-wrap align-items-center gap-2">
+
+        <!-- Situação + Salvar -->
+        <form method="post" class="d-flex align-items-center gap-2 mb-0">
           {% csrf_token %}
-          <label for="situacao" class="me-1 mb-0">Situação:</label>
-          <select name="situacao" id="situacao" class="form-select form-select-sm me-1">
+          <label for="situacao" class="mb-0">Situação:</label>
+          <select name="situacao" id="situacao" class="form-select form-select-sm">
             {% for key, label in situacao_choices %}
               <option value="{{ key }}" {% if servico.situacao == key %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
@@ -26,12 +29,20 @@
           <button type="submit" class="btn btn-sm btn-outline-primary">Salvar</button>
         </form>
 
-        <a href="{% url 'editar_servico' ordem.id servico.id %}" class="btn btn-sm btn-primary me-2">
+        <!-- Botão Editar -->
+        <a href="{% url 'editar_servico' ordem.id servico.id %}" class="btn btn-sm btn-primary">
           <i class="fa fa-edit"></i> Editar
         </a>
+
+        <!-- Voltar -->
+        <a href="{% url 'ver_ordem_servico' ordem.id %}" class="btn btn-sm btn-outline-secondary">
+          <i class="fa fa-arrow-left"></i> Voltar à OS
+        </a>
+
       </div>
     </div>
   </div>
+</div>
 
   <!-- Situação: mobile -->
   <div class="d-block d-md-none mb-4">
@@ -159,6 +170,13 @@
       
     </div>
   </div>
+
+  <!-- Botão Voltar: mobile -->
+<div class="d-md-none mt-4">
+  <a href="{% url 'ver_ordem_servico' ordem.id %}" class="btn btn-outline-secondary w-100">
+    <i class="fa fa-arrow-left"></i> Voltar à Ordem de Serviço
+  </a>
+</div>
 
 </div>
 {% endblock %}

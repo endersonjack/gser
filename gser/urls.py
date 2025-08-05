@@ -4,7 +4,7 @@ from django.contrib.auth import views as auth_views
 from django.conf import settings
 from django.conf.urls.static import static
 from contratos.views import *
-from local.views import listar_locais, editar_local, excluir_local, inserir_local
+from local.views import *
 from ordemservico.views import *
 
 
@@ -38,6 +38,8 @@ urlpatterns = [
     path('ordem/<int:ordem_id>/servico/<int:servico_id>/fotos/novo/', criar_album, name='criar_album'),
     path('ordem/<int:ordem_id>/servico/<int:servico_id>/fotos/album/<int:album_id>/', gerenciar_album, name='gerenciar_album'),
     path('foto/<int:foto_id>/excluir/', excluir_foto, name='excluir_foto'),
+    path('album/<int:album_id>/excluir/', excluir_album, name='excluir_album')
+
 
 
 
