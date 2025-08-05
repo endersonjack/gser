@@ -38,8 +38,10 @@ urlpatterns = [
     path('ordem/<int:ordem_id>/servico/<int:servico_id>/fotos/novo/', criar_album, name='criar_album'),
     path('ordem/<int:ordem_id>/servico/<int:servico_id>/fotos/album/<int:album_id>/', gerenciar_album, name='gerenciar_album'),
     path('foto/<int:foto_id>/excluir/', excluir_foto, name='excluir_foto'),
-    path('album/<int:album_id>/excluir/', excluir_album, name='excluir_album')
+    path('album/<int:album_id>/excluir/', excluir_album, name='excluir_album'),
 
+    path('buscar/', buscar, name='buscar_os'),
+    path('buscar/exportar-pdf/', exportar_resultado_pdf, name='exportar_resultado_pdf'),
 
 
 

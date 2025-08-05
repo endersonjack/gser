@@ -5,9 +5,9 @@
   <a href="{% url 'criar_ordem_servico' %}" class="{% if request.resolver_match.url_name == 'criar_ordem_servico' %}active{% endif %}">
     <i class="fa fa-plus-circle"></i>Inserir
   </a>
-  <a href="#" class="{% if request.resolver_match.url_name == 'buscar_os' %}active{% endif %}">
-    <i class="fa fa-search"></i>Buscar
-  </a>
+  <a href="{% url 'buscar_os' %}" class="{% if request.resolver_match.url_name == 'buscar_os' %}active{% endif %}">
+  <i class="fa fa-search"></i>Buscar
+</a>
   <a href="#" class="{% if request.resolver_match.url_name == 'menu_mobile' %}active{% endif %}">
     <i class="fa fa-bars"></i>Menu
   </a>

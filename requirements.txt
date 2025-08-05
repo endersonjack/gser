@@ -1,10 +1,35 @@
+# asgiref==3.8.1
+# Django==5.0.6
+# gunicorn==22.0.0
+# psycopg2==2.9.9
+# sqlparse==0.5.0
+# whitenoise==6.7.0
+# python-dotenv==1.1.1
+# dj-database-url==3.0.1
+# pillow==11.3.0
+# django-widget-tweaks==1.5.0
 asgiref==3.8.1
-Django==5.0.6
-gunicorn==22.0.0
-psycopg2==2.9.9
-sqlparse==0.5.0
-whitenoise==6.7.0
-python-dotenv==1.1.1
+Brotli==1.1.0
+cffi==1.17.1
+cssselect2==0.8.0
 dj-database-url==3.0.1
-pillow==11.3.0
+Django==5.0.6
 django-widget-tweaks==1.5.0
+fonttools==4.59.0
+gunicorn==22.0.0
+packaging==25.0
+pillow==11.3.0
+psycopg2==2.9.10
+psycopg2-binary==2.9.10
+pycparser==2.22
+pydyf==0.11.0
+pyphen==0.17.2
+python-dotenv==1.1.1
+sqlparse==0.5.0
+tinycss2==1.4.0
+tinyhtml5==2.0.0
+typing_extensions==4.14.1
+weasyprint==66.0
+webencodings==0.5.1
+whitenoise==6.7.0
+zopfli==0.2.3.post1

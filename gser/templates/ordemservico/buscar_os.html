@@ -1,0 +1,241 @@
+{% extends "mobile_menu_base.html" %}
+{% load static %}
+
+{% block title %}Buscar OS e Serviços{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+
+  <!-- Cabeçalho com botões -->
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <h4 class="mb-0"><i class="fa fa-search me-2"></i> Busca Avançada</h4>
+
+      <!-- Limpar -->
+      <a href="{% url 'buscar_os' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="fa fa-times"></i> Limpar Todos os Campos
+      </a>
+
+      <!-- Exportar PDF -->
+      {% if filtros.tipo and tem_resultados %}
+        <a id="exportarPdfBtn" href="{% url 'exportar_resultado_pdf' %}?{{ request.GET.urlencode }}"
+   class="btn btn-outline-danger btn-sm" target="_blank" rel="noopener">
+  <i class="fa fa-file-pdf"></i> Exportar PDF
+</a>
+
+      {% endif %}
+    </div>
+
+    <!-- Voltar -->
+    <a href="{% url 'contratos' %}" class="btn btn-outline-secondary d-none d-md-inline-block">
+      <i class="fa fa-arrow-left"></i> Voltar aos Contratos
+    </a>
+  </div>
+
+  <div class="accordion" id="accordionBusca">
+
+    <!-- Accordion: Buscar OS -->
+    <div class="accordion-item mb-3">
+      <h2 class="accordion-header" id="headingOs">
+        <button class="accordion-button {% if not filtros.tipo or filtros.tipo == 'os' %} {% else %}collapsed{% endif %}" type="button"
+          data-bs-toggle="collapse" data-bs-target="#collapseOs" aria-expanded="true" aria-controls="collapseOs">
+          <i class="fa fa-file-alt me-2 text-primary"></i> Buscar Ordem de Serviço
+        </button>
+      </h2>
+      <div id="collapseOs" class="accordion-collapse collapse {% if not filtros.tipo or filtros.tipo == 'os' %}show{% endif %}"
+        aria-labelledby="headingOs" data-bs-parent="#accordionBusca">
+        <div class="accordion-body">
+
+          <!-- Formulário OS -->
+          <form method="get" class="mb-4">
+            <input type="hidden" name="tipo" value="os">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label">Contrato</label>
+                <select name="contrato" class="form-select">
+                  <option value="">Todos</option>
+                  {% for contrato in contratos %}
+                    <option value="{{ contrato.id }}" {% if filtros.contrato == contrato.id|stringformat:"s" %}selected{% endif %}>
+                      {{ contrato.numero }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Nº OS</label>
+                <input type="text" name="numero_os" class="form-control" value="{{ filtros.numero_os }}">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Situação da OS</label>
+                <select name="situacao" class="form-select">
+                  <option value="">Todas</option>
+                  {% for key, label in situacao_choices %}
+                    <option value="{{ key }}" {% if filtros.situacao == key %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-12 mt-2">
+                <button type="submit" class="btn btn-primary">
+                  <i class="fa fa-search"></i> Buscar Ordem de Serviço
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <!-- Tabela OS -->
+          {% if filtros.tipo == 'os' and resultados_os %}
+            <p class="text-muted small">Total: {{ resultados_os|length }} ordens encontradas</p>
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>#</th>
+                    <th>Nº OS</th>
+                    <th>Contrato</th>
+                    <th>Local</th>
+                    <th>Início</th>
+                    <th>Situação</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for os in resultados_os %}
+                    <tr class="clickable-row" data-href="{% url 'ver_ordem_servico' os.id %}" style="cursor: pointer;">
+                      <td>{{ forloop.counter }}</td>
+                      <td>{{ os.numero_formatado  }}</td>
+                      <td>{{ os.contrato.numero }}</td>
+                      <td>{{ os.local.nome }}</td>
+                      <td>{{ os.data_inicio|date:"d/m/Y" }}</td>
+                      <td>{{ os.get_situacao_display }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% elif filtros.tipo == 'os' %}
+            <div class="alert alert-warning">Nenhuma OS encontrada.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Accordion: Buscar Serviço -->
+    <div class="accordion-item">
+      <h2 class="accordion-header" id="headingServico">
+        <button class="accordion-button {% if filtros.tipo == 'servico' %} {% else %}collapsed{% endif %}" type="button"
+          data-bs-toggle="collapse" data-bs-target="#collapseServico" aria-expanded="false" aria-controls="collapseServico">
+          <i class="fa fa-tools me-2 text-success"></i> Buscar Serviço
+        </button>
+      </h2>
+      <div id="collapseServico" class="accordion-collapse collapse {% if filtros.tipo == 'servico' %}show{% endif %}"
+        aria-labelledby="headingServico" data-bs-parent="#accordionBusca">
+        <div class="accordion-body">
+
+          <!-- Formulário Serviço -->
+          <form method="get" class="mb-4">
+            <input type="hidden" name="tipo" value="servico">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label">Descrição</label>
+                <input type="text" name="descricao" class="form-control" value="{{ filtros.descricao }}">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Categoria</label>
+                <select name="categoria" class="form-select">
+                  <option value="">Todas</option>
+                  {% for categoria in categorias %}
+                    <option value="{{ categoria.id }}" {% if filtros.categoria == categoria.id|stringformat:"s" %}selected{% endif %}>
+                      {{ categoria.nome }}
+                    </option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Situação</label>
+                <select name="situacao_servico" class="form-select">
+                  <option value="">Todas</option>
+                  {% for key, label in situacao_choices %}
+                    <option value="{{ key }}" {% if filtros.situacao_servico == key %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Início (de)</label>
+                <input type="date" name="data_inicio" class="form-control" value="{{ filtros.data_inicio }}">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">Início (até)</label>
+                <input type="date" name="data_fim" class="form-control" value="{{ filtros.data_fim }}">
+              </div>
+              <div class="col-12 mt-2">
+                <button type="submit" class="btn btn-success">
+                  <i class="fa fa-search"></i> Buscar Serviço
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <!-- Tabela Serviço -->
+          {% if filtros.tipo == 'servico' and resultados_servico %}
+            <p class="text-muted small">Total: {{ resultados_servico|length }} serviços encontrados</p>
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>#</th>
+                    <th>Descrição</th>
+                    <th>Categoria</th>
+                    <th>Situação</th>
+                    <th>Qtd</th>
+                    <th>Nº OS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for servico in resultados_servico %}
+                    <tr class="clickable-row" data-href="{% url 'visualizar_servico' servico.ordem.id servico.id %}" style="cursor: pointer;">
+                      <td>{{ forloop.counter }}</td>
+                      <td>{{ servico.descricao|truncatechars:60 }}</td>
+                      <td>{{ servico.categoria.nome }}</td>
+                      <td>{{ servico.get_situacao_display }}</td>
+                      <td>{{ servico.quantidade }}</td>
+                      <td>{{ servico.ordem.numero_formatado  }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% elif filtros.tipo == 'servico' %}
+            <div class="alert alert-warning">Nenhum serviço encontrado.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- JS: Clique na linha -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.clickable-row').forEach(function (row) {
+      row.addEventListener('click', function () {
+        window.location.href = row.dataset.href;
+      });
+    });
+  });
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const isMobile = window.innerWidth <= 768;
+    const link = document.getElementById('exportarPdfBtn');
+
+    if (isMobile) {
+      // Força download no mobile
+      link.removeAttribute('target');
+      link.setAttribute('download', 'relatorio_busca.pdf');
+    } else {
+      // Mantém em nova aba no desktop
+      link.setAttribute('target', '_blank');
+      link.removeAttribute('download');
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      font-family: sans-serif;
+      font-size: 12px;
+      color: #000;
+    }
+    h2 {
+      margin-top: 30px;
+      margin-bottom: 10px;
+      color: #0d6efd;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
+    .small {
+      font-size: 11px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Relatório de Busca</h1>
+  <p class="small">Gerado em {{ now|date:"d/m/Y H:i" }}</p>
+
+  {% if resultados_os %}
+    <h2>Ordens de Serviço</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Nº OS</th>
+          <th>Contrato</th>
+          <th>Local</th>
+          <th>Data Início</th>
+          <th>Situação</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for os in resultados_os %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ os.numero_formatado  }}</td>
+            <td>{{ os.contrato.numero }}</td>
+            <td>{{ os.local.nome }}</td>
+            <td>{{ os.data_inicio|date:"d/m/Y" }}</td>
+            <td>{{ os.get_situacao_display }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+
+  {% if resultados_servico %}
+    <h2>Serviços</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Descrição</th>
+          <th>Categoria</th>
+          <th>Situação</th>
+          <th>Quantidade</th>
+          <th>OS</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for servico in resultados_servico %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ servico.descricao }}</td>
+            <td>{{ servico.categoria.nome }}</td>
+            <td>{{ servico.get_situacao_display }}</td>
+            <td>{{ servico.quantidade }}</td>
+            <td>{{ servico.ordem.numero_formatado  }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+
+  {% if not resultados_os and not resultados_servico %}
+    <p><em>Nenhum dado encontrado para os filtros aplicados.</em></p>
+  {% endif %}
+
+</body>
+</html>

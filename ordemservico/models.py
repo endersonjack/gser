@@ -41,8 +41,12 @@ class OrdemServico(models.Model):
 
         super().save(*args, **kwargs)
 
-    def __str__(self):
-        return f"OS {self.numero} - Contrato {self.contrato.numero}"
+    @property
+    def numero_formatado(self):
+        try:
+            return f"{int(self.numero):04d}"
+        except (TypeError, ValueError):
+            return self.numero  # fallback se não for número válido
     
     #o sistema permitirá números repetidos em contratos diferentes, mas bloqueará repetições no mesmo contrato.
     class Meta:

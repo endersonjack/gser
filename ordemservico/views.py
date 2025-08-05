@@ -7,8 +7,11 @@ from django.contrib import messages
 from .models import OrdemServico, Servico
 from .forms import OrdemServicoForm, ServicoForm, OrdemServicoEditForm
 from django.forms import inlineformset_factory
-from .models import Album, Foto, OrdemServico, Servico
+from .models import Album, Foto, OrdemServico, Servico, Contrato
 from .forms import AlbumForm, FotoForm
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from weasyprint import HTML
 
 @login_required
 def listar_categorias(request):
@@ -272,3 +275,95 @@ def excluir_album(request, album_id):
     messages.success(request, "Álbum e suas fotos foram excluídos com sucesso.")
 
     return redirect('listar_albuns', ordem_id=ordem_id, servico_id=servico_id)
+
+@login_required
+def buscar(request):
+    contratos = Contrato.objects.all()
+    categorias = Categoria.objects.all()
+    situacao_choices = OrdemServico._meta.get_field('situacao').choices
+
+    filtros = request.GET
+    tipo_busca = filtros.get('tipo')
+
+    resultados_os = []
+    resultados_servico = []
+
+    if tipo_busca == 'os':
+        resultados_os = OrdemServico.objects.select_related('contrato', 'local')
+
+        if filtros.get('contrato'):
+            resultados_os = resultados_os.filter(contrato_id=filtros['contrato'])
+
+        if filtros.get('numero_os'):
+            resultados_os = resultados_os.filter(numero__icontains=filtros['numero_os'])
+
+        if filtros.get('situacao'):
+            resultados_os = resultados_os.filter(situacao=filtros['situacao'])
+
+    elif tipo_busca == 'servico':
+        resultados_servico = Servico.objects.select_related('ordem', 'categoria', 'ordem__contrato', 'ordem__local')
+
+        if filtros.get('descricao'):
+            resultados_servico = resultados_servico.filter(descricao__icontains=filtros['descricao'])
+
+        if filtros.get('categoria'):
+            resultados_servico = resultados_servico.filter(categoria_id=filtros['categoria'])
+
+        if filtros.get('situacao_servico'):
+            resultados_servico = resultados_servico.filter(situacao=filtros['situacao_servico'])
+
+        if filtros.get('data_inicio'):
+            resultados_servico = resultados_servico.filter(ordem__data_inicio__gte=filtros['data_inicio'])
+
+        if filtros.get('data_fim'):
+            resultados_servico = resultados_servico.filter(ordem__data_inicio__lte=filtros['data_fim'])
+
+    return render(request, 'ordemservico/buscar_os.html', {
+        'contratos': contratos,
+        'categorias': categorias,
+        'situacao_choices': situacao_choices,
+        'filtros': filtros,
+        'resultados_os': resultados_os,
+        'resultados_servico': resultados_servico,
+        'tem_resultados': bool(resultados_os or resultados_servico),
+    })
+
+@login_required
+def exportar_resultado_pdf(request):
+    # Reaproveita a lógica de filtros da view buscar
+    filtros = request.GET
+    tipo_busca = filtros.get('tipo')
+    resultados_os = []
+    resultados_servico = []
+
+    if tipo_busca == 'os':
+        resultados_os = OrdemServico.objects.select_related('contrato', 'local')
+        if filtros.get('contrato'):
+            resultados_os = resultados_os.filter(contrato_id=filtros['contrato'])
+        if filtros.get('numero_os'):
+            resultados_os = resultados_os.filter(numero__icontains=filtros['numero_os'])
+        if filtros.get('situacao'):
+            resultados_os = resultados_os.filter(situacao=filtros['situacao'])
+
+    elif tipo_busca == 'servico':
+        resultados_servico = Servico.objects.select_related('ordem', 'categoria')
+        if filtros.get('descricao'):
+            resultados_servico = resultados_servico.filter(descricao__icontains=filtros['descricao'])
+        if filtros.get('categoria'):
+            resultados_servico = resultados_servico.filter(categoria_id=filtros['categoria'])
+        if filtros.get('situacao_servico'):
+            resultados_servico = resultados_servico.filter(situacao=filtros['situacao_servico'])
+
+    html_string = render_to_string('ordemservico/resultado_pdf.html', {
+        'resultados_os': resultados_os,
+        'resultados_servico': resultados_servico,
+        'filtros': filtros
+    })
+
+    html = HTML(string=html_string)
+    result = html.write_pdf()
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = 'inline; filename="relatorio_busca.pdf"'
+    response.write(result)
+    return response
