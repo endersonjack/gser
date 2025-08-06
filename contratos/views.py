@@ -155,8 +155,8 @@ def mapa_ordens_contrato(request, id):
             })
 
 
-    for os in OrdemServico.objects.all():
-        print(f"OS #{os.numero} → Local: {os.local} → LAT: {getattr(os.local, 'latitude', None)}")
+    # for os in OrdemServico.objects.all():
+    #     print(f"OS #{os.numero} → Local: {os.local} → LAT: {getattr(os.local, 'latitude', None)}")
 
     return render(request, 'contratos/mapa_ordens_contrato.html', {
         'contrato': contrato,

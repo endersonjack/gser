@@ -319,9 +319,10 @@
         <h6 class="text-primary mb-1"><i class="fa fa-map-marker-alt me-2"></i> Mapa de Ordens</h6>
         <p class="mb-0 small text-muted">Visualize no mapa onde as ordens estão sendo executadas.</p>
       </div>
-      <a href="{% url 'dashboard_geral' %}" class="btn btn-outline-primary btn-sm ms-2">
-        <i class="fa fa-map"></i>
-      </a>
+      <a href="{% url 'mapa_ordens_contrato' contrato.id %}" class="btn btn-outline-primary btn-sm ms-2">
+  <i class="fa fa-map"></i>
+</a>
+
     </div>
   </div>
 </div>
