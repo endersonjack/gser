@@ -7,6 +7,9 @@ from local.models import Local
 from ordemservico.models import Servico
 from django.urls import reverse
 import json
+from django.db.models import Count
+
+
 
 @login_required
 def selecionar_contrato(request):
@@ -23,13 +26,13 @@ def dashboard_geral(request):
     locais = Local.objects.all()
     categorias = Categoria.objects.all()
 
+    # Consulta base
+    ordens = OrdemServico.objects.select_related('contrato', 'local').prefetch_related('servicos')
+
     # Filtros da requisição
     contrato_id = request.GET.get('contrato')
     local_id = request.GET.get('local')
     categoria_id = request.GET.get('categoria')
-
-    # Consulta base
-    ordens = OrdemServico.objects.select_related('contrato', 'local').prefetch_related('servicos')
 
     # Aplicação de filtros
     if contrato_id:
@@ -41,22 +44,33 @@ def dashboard_geral(request):
     if categoria_id:
         ordens = ordens.filter(servicos__categoria_id=categoria_id).distinct()
 
+    # Totais globais (com base nas ordens filtradas)
+    total_os = ordens.count()
+    total_servicos = Servico.objects.filter(ordem__in=ordens).count()
+    total_finalizadas = ordens.filter(situacao="finalizado").count()
+    percentual_finalizadas = round((total_finalizadas / total_os) * 100, 1) if total_os else 0
+    ultima_os = ordens.order_by('-id').first()
+
     # Contagem por status
     status_counts = {
         "nao_iniciado": ordens.filter(situacao="nao_iniciado").count(),
         "em_andamento": ordens.filter(situacao="em_andamento").count(),
         "pendente": ordens.filter(situacao__in=["pendente", "paralisado"]).count(),
         "cancelado": ordens.filter(situacao="cancelado").count(),
-        "finalizado": ordens.filter(situacao="finalizado").count(),
+        "finalizado": total_finalizadas,
     }
 
     context = {
         'ordens_recentes': ordens.order_by('-id')[:10],
-        'total_geral': ordens.count(),
+        'total_geral': total_os,
         'contratos': contratos,
         'locais': locais,
         'categorias': categorias,
         'status_counts': status_counts,
+        'total_os': total_os,
+        'total_servicos': total_servicos,
+        'percentual_finalizadas': percentual_finalizadas,
+        'ultima_os': ultima_os,
         'filtros': {
             'contrato_id': contrato_id,
             'local_id': local_id,
@@ -65,6 +79,7 @@ def dashboard_geral(request):
     }
 
     return render(request, 'contratos/dashboard_geral.html', context)
+
 
 @login_required
 def dashboard_contrato(request, id):

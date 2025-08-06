@@ -1,201 +1,232 @@
-
-
 {% extends "mobile_menu_base.html" %}
 {% load static %}
 {% block extra_head %}
   <style>
-    body { margin: 0; padding: 0; overflow-x: hidden; background-color: #f8f9fa; }
-    .wrapper { display: flex; flex-direction: column; min-height: 100vh; overflow-x: hidden; }
-    .sidebar { width: 260px; background-color: #343a40; color: #fff; padding: 15px 0; flex-shrink: 0; max-height: 100vh; overflow-y: auto; }
-    .sidebar a { color: #fff; display: block; padding: 10px 20px; text-decoration: none; }
-    .sidebar a.active, .sidebar a:hover { background-color: #007bff; }
-    .main-content { flex: 1; overflow-y: auto; background-color: #f8f9fa; padding: 20px; }
-    .card-icon { font-size: 1.8rem; opacity: 0.25; position: absolute; right: 15px; bottom: 10px; }
-    .status-card { height: 120px; display: flex; flex-direction: column; justify-content: center; position: relative; min-width: 180px; flex: 1 1 auto; }
-    .status-card .card-body { flex: 1; display: flex; flex-direction: column; justify-content: center; }
-    @media (max-width: 768px) {
-      .wrapper { flex-direction: column; height: auto; } 
-      .sidebar { display: none !important; }
-      .main-content { padding: 15px; height: auto; }
-      .status-cards-container { flex-wrap: wrap; gap: 10px; justify-content: center; }
-      .status-card { min-width: 48%; }
-    }
-    @media (max-width: 500px) { .status-card { min-width: 100%; } }
+  .wrapper {
+  display: flex;
+  flex-direction: row;
+  min-height: 100vh;
+  width: 100vw;
+  max-width: 100vw;
+  overflow-x: hidden;
+  margin: 0 auto;
+}
+
+.sidebar {
+  width: 260px;
+  background-color: #343a40;
+  color: #fff;
+  padding: 15px 0;
+  flex-shrink: 0;
+  max-height: 100vh;
+  overflow-y: auto;
+}
+
+.main-content {
+  flex: 1;
+  overflow-x: hidden;
+  padding: 20px;
+}
+
+/* MOBILE RESPONSIVE */
+@media (max-width: 768px) {
+  .wrapper {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .sidebar {
+    display: none !important;
+  }
+
+  .main-content {
+    max-width: 100% !important;
+    padding: 15px;
+  }
+}
+
+/* DESKTOP ONLY */
+@media (min-width: 769px) {
+  .main-content {
+    max-width: calc(100vw - 260px);
+  }
+}
+
   </style>
 {% endblock %}
 
- {% block content %}
- <div class="wrapper flex-column flex-md-row">
-  <!-- SIDEBAR -->
-<div class="sidebar bg-dark p-2" >
+{% block content %}
+<div class="wrapper flex-column flex-md-row">
 
-  <a href="{% url 'contratos' %}" class="d-none d-md-block py-2 px-3 text-white text-decoration-none">
-    <i class="fa fa-arrow-left me-2"></i> Contratos
-  </a>
+  <!-- Sidebar -->
+  <div class="sidebar bg-dark p-2">
+    <a href="{% url 'contratos' %}" class="d-none d-md-block py-2 px-3 text-white text-decoration-none">
+      <i class="fa fa-arrow-left me-2"></i> Contratos
+    </a>
 
-  <a href="{% url 'criar_ordem_servico' %}" class="btn btn-success btn-sm w-100 text-start my-2 d-none d-md-block">
-    <i class="fa fa-plus-circle me-2"></i> Inserir OS
-  </a>
+    <a href="{% url 'criar_ordem_servico' %}" class="btn btn-success btn-sm w-100 text-start my-2 d-none d-md-block">
+      <i class="fa fa-plus-circle me-2"></i> Inserir OS
+    </a>
 
-  <a href="{% url 'buscar_os' %}" class="d-block py-2 px-3 text-white text-decoration-none">
+    <a href="{% url 'buscar_os' %}" class="d-block py-2 px-3 text-white text-decoration-none">
       <i class="fa fa-search me-2"></i> Buscar
     </a>
+
     <a href="{% url 'mapa_ordens_geral' %}" class="d-block py-2 px-3 text-white text-decoration-none">
-  <i class="fa fa-map-marked-alt me-2"></i> Mapa de Ordens
-</a>
-
-  <hr class="bg-light" />
-
-  <div class="d-none d-md-block">
-    <a href="{% url 'locais' %}" class="d-block py-2 px-3 text-white text-decoration-none">
-      <i class="fa fa-box me-2"></i> Locais
+      <i class="fa fa-map-marked-alt me-2"></i> Mapa de Ordens
     </a>
-    <a href="{% url 'listar_categorias' %}" class="d-block py-2 px-3 text-white text-decoration-none">
-      <i class="fa fa-tags me-2"></i> Categorias
-    </a>
+
+    <hr class="bg-light" />
+
+    <div class="d-none d-md-block">
+      <a href="{% url 'locais' %}" class="d-block py-2 px-3 text-white text-decoration-none">
+        <i class="fa fa-box me-2"></i> Locais
+      </a>
+      <a href="{% url 'listar_categorias' %}" class="d-block py-2 px-3 text-white text-decoration-none">
+        <i class="fa fa-tags me-2"></i> Categorias
+      </a>
+    </div>
   </div>
-</div>
-
 
   <!-- Main Content -->
   <div class="main-content">
-     <!-- Cabeçalho -->  
-      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
-          
-        <div>
-            <h2 class="mb-1"><i class="fa fa-layer-group"></i> Todos os Contratos</h2>
-            <p class="mb-0 text-muted small">
-              <strong>Empresa:</strong> BRASIL CONSTRUÇÃO LTDA |
-              <strong>Órgão:</strong> PREFEITURA MUNICIPAL DE PARNAMIRIM
-            </p>
+
+    <!-- Cabeçalho -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
+      <div>
+        <h2 class="mb-1"><i class="fa fa-layer-group"></i> Todos os Contratos</h2>
+        <p class="mb-0 text-muted small">
+          <strong>Empresa:</strong> BRASIL CONSTRUÇÃO LTDA |
+          <strong>Órgão:</strong> PREFEITURA MUNICIPAL DE PARNAMIRIM
+        </p>
+      </div>
+      <nav aria-label="breadcrumb" class="d-none d-md-block">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a href="{% url 'contratos' %}">Contratos</a></li>
+          <li class="breadcrumb-item active" aria-current="page">Painel</li>
+        </ol>
+      </nav>
+    </div>
+
+    <!-- Indicadores Rápidos -->
+    <div class="row row-cols-1 row-cols-md-4 g-3 mb-4">
+
+      <!-- Total de OS -->
+      <div class="col">
+        <div class="card text-white bg-dark h-100">
+          <div class="card-body d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div>
+                <h6 class="card-title mb-0 text-uppercase small">Total de O.S.</h6>
+                <h3 class="mb-0">{{ total_os }}</h3>
+              </div>
+              <i class="fa fa-layer-group fa-2x opacity-25"></i>
+            </div>
           </div>
-
-          <!-- Breadcrumb (desktop) -->
-          <nav aria-label="breadcrumb" class="d-none d-md-block">
-            <ol class="breadcrumb mb-0">
-              <li class="breadcrumb-item"><a href="{% url 'contratos' %}">Contratos</a></li>
-              <li class="breadcrumb-item active" aria-current="page">Painel</li>
-            </ol>
-          </nav>
-
+        </div>
       </div>
 
+      <!-- % Finalizadas -->
+      <div class="col">
+        <div class="card text-white bg-success h-100">
+          <div class="card-body d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div>
+                <h6 class="card-title mb-0 text-uppercase small">% Finalizadas</h6>
+                <h3 class="mb-0">{{ percentual_finalizadas }}%</h3>
+              </div>
+              <i class="fa fa-check-double fa-2x opacity-25"></i>
+            </div>
+          </div>
+        </div>
+      </div>
 
-<!-- Cards - Status de Ordens -->
-    <div class="d-flex flex-wrap gap-3 mb-4 status-cards-container">
+      <!-- Total de Serviços -->
+      <div class="col">
+        <div class="card text-white bg-primary h-100">
+          <div class="card-body d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div>
+                <h6 class="card-title mb-0 text-uppercase small">Total de Serviços</h6>
+                <h3 class="mb-0">{{ total_servicos }}</h3>
+              </div>
+              <i class="fa fa-tools fa-2x opacity-25"></i>
+            </div>
+          </div>
+        </div>
+      </div>
 
-  <a href="{% url 'buscar_os' %}?tipo=os&situacao=nao_iniciado" class="text-decoration-none">
-    <div class="card bg-secondary text-white status-card">
-      <div class="card-body">
-        <h3>{{ status_counts.nao_iniciado }}</h3>
-        <p>Não Iniciado</p>
-        <i class="fa fa-circle card-icon"></i>
+      <!-- Última OS criada -->
+      <div class="col">
+        <div class="card text-white bg-info h-100">
+          <div class="card-body d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div>
+                <h6 class="card-title mb-0 text-uppercase small">Última O.S.</h6>
+                <h3 class="mb-0">{{ ultima_os.numero_formatado }}</h3>
+              </div>
+              <i class="fa fa-clock fa-2x opacity-25"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Card do Mapa de Ordens (mobile only) -->
+    <div class="d-block d-md-none mb-4">
+      <div class="card border-primary shadow-sm">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div>
+            <h6 class="text-primary mb-1"><i class="fa fa-map-marker-alt me-2"></i> Mapa de Ordens</h6>
+            <p class="mb-0 small text-muted">Visualize no mapa onde as ordens estão sendo executadas.</p>
+          </div>
+          <a href="{% url 'mapa_ordens_geral' %}" class="btn btn-outline-primary btn-sm ms-2">
+            <i class="fa fa-map"></i>
+          </a>
+        </div>
       </div>
     </div>
-  </a>
-
-  <a href="{% url 'buscar_os' %}?tipo=os&situacao=em_andamento" class="text-decoration-none">
-    <div class="card bg-primary text-white status-card">
-      <div class="card-body">
-        <h3>{{ status_counts.em_andamento }}</h3>
-        <p>Em Andamento</p>
-        <i class="fa fa-spinner card-icon"></i>
-      </div>
-    </div>
-  </a>
-
-  <a href="{% url 'buscar_os' %}?tipo=os&situacao=pendente" class="text-decoration-none">
-    <div class="card bg-warning text-dark status-card">
-      <div class="card-body">
-        <h3>{{ status_counts.pendente }}</h3>
-        <p>Pendente/Paralisado</p>
-        <i class="fa fa-pause-circle card-icon"></i>
-      </div>
-    </div>
-  </a>
-
-  <a href="{% url 'buscar_os' %}?tipo=os&situacao=cancelado" class="text-decoration-none">
-    <div class="card bg-danger text-white status-card">
-      <div class="card-body">
-        <h3>{{ status_counts.cancelado }}</h3>
-        <p>Cancelado</p>
-        <i class="fa fa-times-circle card-icon"></i>
-      </div>
-    </div>
-  </a>
-
-  <a href="{% url 'buscar_os' %}?tipo=os&situacao=finalizado" class="text-decoration-none">
-    <div class="card bg-success text-white status-card">
-      <div class="card-body">
-        <h3>{{ status_counts.finalizado }}</h3>
-        <p>Finalizado</p>
-        <i class="fa fa-check-circle card-icon"></i>
-      </div>
-    </div>
-  </a>
-
-</div>
-
-
-
-
-
 
     <!-- Tabela - Últimas Ordens de Serviço -->
-<div class="card mt-4">
-  <div class="card-body">
-    <h5 class="card-title d-flex justify-content-between align-items-center">
-      Últimas Ordens de Serviço
-      <a href="#" class="btn btn-outline-primary btn-sm">Ver Todas</a>
-    </h5>
-    <div class="table-responsive">
-      <table class="table table-bordered table-hover table-striped">
-        <thead class="table-light">
-          <tr>
-            <th>Contrato</th>
-            <th>Nº O.S.</th>
-            <!-- <th>Categoria</th> -->
-            <th>Local</th>
-            <th>Início</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for ordem in ordens_recentes %}
-          <tr>
-            <td>
-              <a href="{% url 'dashboard_contrato' ordem.contrato.id %}">
-                {{ ordem.contrato.numero }}
-              </a>
-            </td>
-            <td>
-              <a href="{% url 'ver_ordem_servico' ordem.id %}">
-                {{ ordem.numero }}
-              </a>
-            </td>
-            <!-- <td>
-              {% with ordem.servicos.first as servico %}
-                {{ servico.categoria.nome|default:"-" }}
-              {% endwith %}
-            </td> -->
-            <td>{{ ordem.local.nome|default:"-" }}</td>
-            <td>{{ ordem.data_inicio|date:"d/m/Y" }}</td>
-            <td>{{ ordem.get_situacao_display }}</td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="6" class="text-center text-muted">Nenhuma ordem de serviço encontrada.</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+    <div class="card mt-4">
+      <div class="card-body">
+        <h5 class="card-title d-flex justify-content-between align-items-center">
+          Últimas Ordens de Serviço
+          <a href="#" class="btn btn-outline-primary btn-sm" aria-label="Ver todas as ordens de serviço">Ver Todas</a>
+        </h5>
+        <div class="table-responsive">
+          <table class="table table-bordered table-hover table-striped">
+            <thead class="table-light">
+              <tr>
+                <th>Contrato</th>
+                <th>Nº O.S.</th>
+                <th>Local</th>
+                <th>Início</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ordem in ordens_recentes %}
+              <tr>
+                <td><a href="{% url 'dashboard_contrato' ordem.contrato.id %}">{{ ordem.contrato.numero }}</a></td>
+                <td><a href="{% url 'ver_ordem_servico' ordem.id %}">{{ ordem.numero }}</a></td>
+                <td>{{ ordem.local.nome|default:"-" }}</td>
+                <td>{{ ordem.data_inicio|date:"d/m/Y" }}</td>
+                <td>{{ ordem.get_situacao_display }}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="6" class="text-center text-muted">Nenhuma ordem de serviço encontrada.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
-
-
-<!-- Rodapé -->
+    <!-- Rodapé -->
     <div class="text-center mt-5 mb-3 text-muted small">
       Logado como: <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
       <form method="POST" action="{% url 'logout' %}" class="d-inline ms-2">
@@ -206,12 +237,6 @@
       </form>
     </div>
 
-
-
-
-
-
   </div>
 </div>
-
 {% endblock %}
