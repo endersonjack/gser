@@ -165,12 +165,13 @@
     <a href="{% url 'criar_ordem_servico' %}" class="btn btn-success btn-sm w-100 text-start my-2 d-none d-md-block">
       <i class="fa fa-plus-circle me-2"></i> Inserir OS
     </a>
-    <a href="#" class="d-block py-2 px-3 text-white text-decoration-none">
-      <i class="fa fa-search me-2"></i> Pesquisar OS
+    <a href="{% url 'buscar_os' %}" class="d-block py-2 px-3 text-white text-decoration-none">
+      <i class="fa fa-search me-2"></i> Buscar
     </a>
-    <a href="#" class="d-block py-2 px-3 text-white text-decoration-none">
-      <i class="fa fa-search me-2"></i> Pesquisar Serviço
-    </a>
+    <a href="{% url 'mapa_ordens_contrato' contrato.id %}" class="d-block py-2 px-3 text-white text-decoration-none">
+  <i class="fa fa-map-marked-alt me-2"></i> Mapa de Ordens
+</a>
+
     <hr class="bg-light" />
     <div class="d-none d-md-block">
       <a href="{% url 'locais' %}" class="d-block py-2 px-3 text-white text-decoration-none">
@@ -200,6 +201,74 @@
         </ol>
       </nav>
     </div>
+
+
+    <!-- Indicadores Rápidos -->
+<div class="row row-cols-1 row-cols-md-4 g-3 mb-4">
+
+  <!-- Total de OS -->
+  <div class="col">
+    <div class="card text-white bg-dark h-100">
+      <div class="card-body d-flex flex-column">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div>
+            <h6 class="card-title mb-0 text-uppercase small">Total de O.S.</h6>
+            <h3 class="mb-0">{{ total_os }}</h3>
+          </div>
+          <i class="fa fa-layer-group fa-2x opacity-25"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- % Finalizadas -->
+<div class="col">
+  <div class="card text-white bg-success h-100">
+    <div class="card-body d-flex flex-column">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div>
+          <h6 class="card-title mb-0 text-uppercase small">% Finalizadas</h6>
+          <h3 class="mb-0">{{ percentual_finalizadas }}%</h3>
+        </div>
+        <i class="fa fa-check-double fa-2x opacity-25"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+  <!-- Total de Serviços -->
+  <div class="col">
+    <div class="card text-white bg-primary h-100">
+      <div class="card-body d-flex flex-column">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div>
+            <h6 class="card-title mb-0 text-uppercase small">Total de Serviços</h6>
+            <h3 class="mb-0">{{ total_servicos }}</h3>
+          </div>
+          <i class="fa fa-tools fa-2x opacity-25"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Última OS criada -->
+  <div class="col">
+    <div class="card text-white bg-info h-100">
+      <div class="card-body d-flex flex-column">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div>
+            <h6 class="card-title mb-0 text-uppercase small">Última O.S.</h6>
+            <h3 class="mb-0">{{ ultima_os.numero_formatado }}</h3>
+          </div>
+          <i class="fa fa-clock fa-2x opacity-25"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
 
     <!-- Cards + Tabela -->
     <div class="d-flex flex-column">
@@ -243,14 +312,60 @@
       
       <!-- Cards - Status de Ordens -->
     <div class="d-flex flex-wrap gap-3 mb-4 status-cards-container">
-      <div class="card bg-secondary text-white status-card"><div class="card-body"><h3>{{ status_counts.nao_iniciado }}</h3><p>Não Iniciado</p><i class="fa fa-circle card-icon"></i></div></div>
-      <div class="card bg-primary text-white status-card"><div class="card-body"><h3>{{ status_counts.em_andamento }}</h3><p>Em Andamento</p><i class="fa fa-spinner card-icon"></i></div></div>
-      <div class="card bg-warning text-dark status-card"><div class="card-body"><h3>{{ status_counts.pendente }}</h3><p>Pendente/Paralisado</p><i class="fa fa-pause-circle card-icon"></i></div></div>
-      <div class="card bg-danger text-white status-card"><div class="card-body"><h3>{{ status_counts.cancelado }}</h3><p>Cancelado</p><i class="fa fa-times-circle card-icon"></i></div></div>
-      <div class="card bg-success text-white status-card"><div class="card-body"><h3>{{ status_counts.finalizado }}</h3><p>Finalizado</p><i class="fa fa-check-circle card-icon"></i></div></div>
+  <a href="{% url 'buscar_os' %}?tipo=os&contrato={{ contrato.id }}&situacao=nao_iniciado" class="text-decoration-none">
+    <div class="card bg-secondary text-white status-card">
+      <div class="card-body">
+        <h3>{{ status_counts.nao_iniciado }}</h3>
+        <p>Não Iniciado</p>
+        <i class="fa fa-circle card-icon"></i>
+      </div>
     </div>
+  </a>
+
+  <a href="{% url 'buscar_os' %}?tipo=os&contrato={{ contrato.id }}&situacao=em_andamento" class="text-decoration-none">
+    <div class="card bg-primary text-white status-card">
+      <div class="card-body">
+        <h3>{{ status_counts.em_andamento }}</h3>
+        <p>Em Andamento</p>
+        <i class="fa fa-spinner card-icon"></i>
+      </div>
+    </div>
+  </a>
+
+  <a href="{% url 'buscar_os' %}?tipo=os&contrato={{ contrato.id }}&situacao=pendente" class="text-decoration-none">
+    <div class="card bg-warning text-dark status-card">
+      <div class="card-body">
+        <h3>{{ status_counts.pendente }}</h3>
+        <p>Pendente/Paralisado</p>
+        <i class="fa fa-pause-circle card-icon"></i>
+      </div>
+    </div>
+  </a>
+
+  <a href="{% url 'buscar_os' %}?tipo=os&contrato={{ contrato.id }}&situacao=cancelado" class="text-decoration-none">
+    <div class="card bg-danger text-white status-card">
+      <div class="card-body">
+        <h3>{{ status_counts.cancelado }}</h3>
+        <p>Cancelado</p>
+        <i class="fa fa-times-circle card-icon"></i>
+      </div>
+    </div>
+  </a>
+
+  <a href="{% url 'buscar_os' %}?tipo=os&contrato={{ contrato.id }}&situacao=finalizado" class="text-decoration-none">
+    <div class="card bg-success text-white status-card">
+      <div class="card-body">
+        <h3>{{ status_counts.finalizado }}</h3>
+        <p>Finalizado</p>
+        <i class="fa fa-check-circle card-icon"></i>
+      </div>
+    </div>
+  </a>
+</div>
+
 
     </div>
+    
 
     <!-- Rodapé -->
     <div class="text-center mt-5 mb-3 text-muted small">

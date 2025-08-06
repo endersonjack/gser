@@ -5,12 +5,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="manifest" href="{% static 'manifest.json' %}">
-<link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
-<link rel="shortcut icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
-<meta name="theme-color" content="#0d6efd" />
+  <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+  <link rel="shortcut icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+  <meta name="theme-color" content="#0d6efd" />
   <title>Editar Local</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     @media (min-width: 768px) {
       .top-actions {
@@ -43,6 +44,12 @@
         width: 100%;
       }
     }
+
+    #map {
+      width: 100%;
+      height: 300px;
+      border-radius: 8px;
+    }
   </style>
 </head>
 <body>
@@ -50,30 +57,27 @@
 <div class="container py-5">
 
   {% if messages %}
-  <div class="mb-4">
-    {% for message in messages %}
-      {% if 'atualizado' in message|stringformat:"s" or 'salvar' in message|stringformat:"s" %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-          {{ message }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
-        </div>
-      {% endif %}
-    {% endfor %}
-  </div>
-{% endif %}
+    <div class="mb-4">
+      {% for message in messages %}
+        {% if 'atualizado' in message|stringformat:"s" or 'salvar' in message|stringformat:"s" %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% endif %}
 
   <!-- Topo no Desktop -->
   <div class="top-actions d-none d-md-flex">
-    <!-- Botões à esquerda -->
     <div class="button-group-desktop">
       <a href="{% url 'locais' %}" class="btn btn-outline-secondary">
         <i class="fa fa-arrow-left"></i> Voltar
       </a>
-
       <button type="submit" form="form-editar" class="btn btn-primary">
         <i class="fa fa-save"></i> Salvar
       </button>
-
       <form method="post" action="{% url 'excluir_local' local.id %}" onsubmit="return confirm('Tem certeza que deseja excluir este local?');">
         {% csrf_token %}
         <button type="submit" class="btn btn-danger">
@@ -81,18 +85,15 @@
         </button>
       </form>
     </div>
-
-    <!-- Título à direita -->
     <h4 class="mb-0"><i class="fa fa-edit me-2"></i> Editar Local</h4>
   </div>
 
-  <!-- Título no Mobile -->
   <div class="d-block d-md-none mb-3">
     <h4><i class="fa fa-edit me-2"></i> Editar Local</h4>
   </div>
 
   <!-- Formulário de Edição -->
-  <form method="post" id="form-editar" class="card card-body shadow-sm">
+  <form method="post" id="form-editar" class="card card-body shadow-sm mb-4">
     {% csrf_token %}
     <div class="mb-3">
       <label for="id_nome" class="form-label">Nome do Local</label>
@@ -102,20 +103,46 @@
       <label for="id_endereco" class="form-label">Endereço</label>
       {{ form.endereco }}
     </div>
+    <div class="mb-3">
+      <label for="id_link_maps" class="form-label">Link do Google Maps</label>
+      {{ form.link_maps }}
+      <div class="form-text">
+        Exemplo: https://www.google.com/maps/place/.../@-5.7944783,-35.211002,...
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="id_latitude" class="form-label">Latitude</label>
+        {{ form.latitude }}
+      </div>
+      <div class="col-md-6 mb-3">
+        <label for="id_longitude" class="form-label">Longitude</label>
+        {{ form.longitude }}
+      </div>
+    </div>
 
     <!-- Botões no Mobile -->
     <div class="button-group-mobile d-md-none">
       <a href="{% url 'locais' %}" class="btn btn-outline-secondary">
         <i class="fa fa-arrow-left"></i> Voltar
       </a>
-
       <button type="submit" class="btn btn-primary">
         <i class="fa fa-save"></i> Salvar
       </button>
     </div>
   </form>
 
-  <!-- Botão excluir (fora do form principal) no Mobile -->
+  <!-- Mapa (se tiver coordenadas) -->
+  {% if local.latitude and local.longitude %}
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <h5 class="card-title"><i class="fa fa-map-marker-alt me-2"></i> Localização no Mapa</h5>
+      <div id="map"></div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Botão excluir no mobile -->
   <div class="d-md-none mt-3">
     <form method="post" action="{% url 'excluir_local' local.id %}" onsubmit="return confirm('Tem certeza que deseja excluir este local?');">
       {% csrf_token %}
@@ -127,6 +154,39 @@
 
 </div>
 
+<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
+<script>
+  // Extrair coordenadas do link do Google Maps
+  document.addEventListener('DOMContentLoaded', function () {
+    const linkInput = document.getElementById('id_link_maps');
+    const latInput = document.getElementById('id_latitude');
+    const lngInput = document.getElementById('id_longitude');
+
+    linkInput.addEventListener('change', function () {
+      const regex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
+      const match = this.value.match(regex);
+      if (match) {
+        latInput.value = match[1];
+        lngInput.value = match[2];
+      }
+    });
+  });
+
+  // Mapa Leaflet se houver coordenadas
+  {% if local.latitude and local.longitude %}
+  const map = L.map('map').setView([{{ local.latitude }}, {{ local.longitude }}], 16);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+  L.marker([{{ local.latitude }}, {{ local.longitude }}])
+    .addTo(map)
+    .bindPopup("<strong>{{ local.nome }}</strong>");
+  {% endif %}
+</script>
+
+</body>
+</html>

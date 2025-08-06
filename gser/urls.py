@@ -42,6 +42,9 @@ urlpatterns = [
 
     path('buscar/', buscar, name='buscar_os'),
     path('buscar/exportar-pdf/', exportar_resultado_pdf, name='exportar_resultado_pdf'),
+    path('contrato/<int:id>/mapa-ordens/', mapa_ordens_contrato, name='mapa_ordens_contrato'),
+    path('mapa-geral/', mapa_ordens_geral, name='mapa_ordens_geral'),
+
 
 
 

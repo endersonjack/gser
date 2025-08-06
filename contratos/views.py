@@ -5,6 +5,8 @@ from .models import Contrato
 from ordemservico.models import OrdemServico, Categoria
 from local.models import Local
 from ordemservico.models import Servico
+from django.urls import reverse
+import json
 
 @login_required
 def selecionar_contrato(request):
@@ -69,13 +71,24 @@ def dashboard_contrato(request, id):
     contrato = get_object_or_404(Contrato, id=id)
     request.session['contrato_id'] = id
 
+    ordens = OrdemServico.objects.filter(contrato=contrato)
+
     status_counts = {
-        "nao_iniciado": OrdemServico.objects.filter(contrato=contrato, situacao="nao_iniciado").count(),
-        "em_andamento": OrdemServico.objects.filter(contrato=contrato, situacao="em_andamento").count(),
-        "pendente": OrdemServico.objects.filter(contrato=contrato, situacao__in=["pendente", "paralisado"]).count(),
-        "cancelado": OrdemServico.objects.filter(contrato=contrato, situacao="cancelado").count(),
-        "finalizado": OrdemServico.objects.filter(contrato=contrato, situacao="finalizado").count(),
+        "nao_iniciado": ordens.filter(situacao="nao_iniciado").count(),
+        "em_andamento": ordens.filter(situacao="em_andamento").count(),
+        "pendente": ordens.filter(situacao__in=["pendente", "paralisado"]).count(),
+        "cancelado": ordens.filter(situacao="cancelado").count(),
+        "finalizado": ordens.filter(situacao="finalizado").count(),
     }
+
+    total_os = ordens.count()
+    total_servicos = Servico.objects.filter(ordem__contrato=contrato).count()
+    ultima_os = ordens.order_by('-id').first()
+
+    if total_os > 0:
+        percentual_finalizadas = round((status_counts['finalizado'] / total_os) * 100)
+    else:
+        percentual_finalizadas = 0
 
     status_info = {
         "nao_iniciado": {"label": "Não Iniciado", "color": "secondary", "icon": "circle"},
@@ -97,6 +110,63 @@ def dashboard_contrato(request, id):
         'status_info': status_info,
         'status_list': status_list,
         'ultimos_servicos': ultimos_servicos,
+        'total_os': total_os,
+        'total_servicos': total_servicos,
+        'ultima_os': ultima_os,
+        'percentual_finalizadas': percentual_finalizadas,
     }
+    
 
     return render(request, 'contratos/dashboard_contrato.html', context)
+
+@login_required
+def mapa_ordens_contrato(request, id):
+    contrato = get_object_or_404(Contrato, id=id)
+
+    ordens = OrdemServico.objects.filter(contrato=contrato).select_related('local')
+
+    locais_com_coords = []
+    for ordem in ordens:
+        local = ordem.local
+        if local and local.latitude is not None and local.longitude is not None:
+            locais_com_coords.append({
+                'id': ordem.id,
+                'numero': getattr(ordem, 'numero_formatado', str(ordem.numero).zfill(4)),
+                'local_nome': local.nome,
+                'lat': float(local.latitude),
+                'lng': float(local.longitude),
+                'situacao': ordem.get_situacao_display(),
+                'url': reverse('ver_ordem_servico', args=[ordem.id])
+            })
+
+
+    for os in OrdemServico.objects.all():
+        print(f"OS #{os.numero} → Local: {os.local} → LAT: {getattr(os.local, 'latitude', None)}")
+
+    return render(request, 'contratos/mapa_ordens_contrato.html', {
+        'contrato': contrato,
+        'marcadores': json.dumps(locais_com_coords)
+    })
+
+@login_required
+def mapa_ordens_geral(request):
+    ordens = OrdemServico.objects.select_related('local')
+
+    locais_com_coords = []
+    for ordem in ordens:
+        local = ordem.local
+        if local and local.latitude and local.longitude:
+            locais_com_coords.append({
+                'id': ordem.id,
+                'numero': getattr(ordem, 'numero_formatado', str(ordem.numero).zfill(4)),
+                'local_nome': local.nome,
+                'lat': float(local.latitude),
+                'lng': float(local.longitude),
+                'situacao': ordem.get_situacao_display(),
+                'url': reverse('ver_ordem_servico', args=[ordem.id])
+            })
+
+    return render(request, 'contratos/mapa_ordens_geral.html', {
+        'marcadores': json.dumps(locais_com_coords)
+    })
+

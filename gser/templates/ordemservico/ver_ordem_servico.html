@@ -3,12 +3,125 @@
 
 {% block title %}Visualizar Ordem de Serviço{% endblock %}
 
+{% block extra_head %}
+<style>
+  /* Cores dinâmicas para situações */
+  .bg-nao_iniciado { background-color: #6c757d !important; color: #fff !important; }
+  .bg-em_andamento { background-color: #0d6efd !important; color: #fff !important; }
+  .bg-pendente,
+  .bg-paralisado { background-color: #ffc107 !important; color: #000 !important; }
+  .bg-finalizado { background-color: #198754 !important; color: #fff !important; }
+  .bg-cancelado { background-color: #dc3545 !important; color: #fff !important; }
+
+  .text-white-important {
+    color: #fff !important;
+  }
+  [data-servico-situacao="finalizado"] {
+  font-weight: bold;
+  color: #fff !important;
+}
+
+  #select-situacao {
+    min-width: 220px;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+</style>
+
+<script>
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const select = document.getElementById('select-situacao');
+    const dataTermino = document.getElementById('data-termino');
+    const situacao = document.getElementById('select-situacao')?.value;
+
+    function toggleDataTermino() {
+      if (select.value === 'finalizado') {
+        dataTermino.style.display = 'block';
+        dataTermino.required = true;
+      } else {
+        dataTermino.style.display = 'none';
+        dataTermino.required = false;
+        dataTermino.value = '';  // limpa a data se não for finalizado
+      }
+    }
+
+    select.addEventListener('change', toggleDataTermino);
+    toggleDataTermino(); // inicial
+
+    if (situacao) {
+      // SELECT
+      const select = document.getElementById('select-situacao');
+      if (select) {
+        select.classList.add('bg-' + situacao, 'text-white');
+      }
+
+      // CABEÇALHO
+      const header = document.getElementById('header-ordem');
+      if (header) {
+        header.classList.add('bg-' + situacao, 'text-white');
+      }
+
+      // SITUAÇÃO DOS SERVIÇOS
+      document.querySelectorAll('[data-servico-situacao]').forEach(function (el) {
+        const val = el.dataset.servicoSituacao;
+        el.classList.add('bg-' + val, 'fw-bold');
+
+        // Se não for warning (amarelo), força branco
+        if (!['pendente', 'paralisado'].includes(val)) {
+          el.classList.add('text-white');
+        }
+
+        // Ícone se finalizado
+        if (val === 'finalizado' && !el.innerHTML.includes('fa-check-circle')) {
+          el.innerHTML += ' <i class="fa fa-check-circle ms-1"></i>';
+        }
+      });
+    }
+  });
+</script>
+
+{% endblock %}
+
 {% block content %}
 <div class="container py-4">
 
   <!-- Cabeçalho -->
-  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-    <h4><i class="fa fa-file-alt me-2"></i> Detalhes: Ordem de Serviço nº {{ ordem.numero }}</h4>
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
+    <div class="d-flex align-items-center gap-3">
+      <h4 class="mb-0">
+        <i class="fa fa-file-alt me-2"></i> Detalhes: Ordem de Serviço nº {{ ordem.numero }}
+      </h4>
+
+      <!-- Situação Editável (somente desktop) -->
+      <form method="post" class="d-none d-md-flex align-items-center gap-2" id="form-situacao">
+  {% csrf_token %}
+  
+  <select name="situacao" id="select-situacao" class="form-select form-select-sm fw-bold text-white border-0 rounded">
+    {% for value, label in situacao_choices %}
+      <option value="{{ value }}" {% if value == ordem.situacao %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+
+  <!-- Campo Data de Término (visível apenas se "finalizado") -->
+  <input
+    type="date"
+    name="data_termino"
+    id="data-termino"
+    class="form-control form-control-sm"
+    style="display: none; max-width: 160px;"
+    value="{{ ordem.data_termino|date:'Y-m-d' }}"
+  />
+
+  <button type="submit" class="btn btn-outline-primary btn-sm">Salvar</button>
+</form>
+
+
+
+
+
+    </div>
+
     <a href="{% url 'dashboard_contrato' ordem.contrato.id %}" class="btn btn-outline-secondary d-none d-md-inline">
       <i class="fa fa-arrow-left"></i> Voltar ao Contrato
     </a>
@@ -16,7 +129,7 @@
 
   <!-- Dados da OS -->
   <div class="card mb-4">
-    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+    <div id="header-ordem" class="card-header d-flex justify-content-between align-items-center">
       <strong>Dados da Ordem de Serviço</strong>
       <a href="{% url 'editar_ordem_servico' ordem.id %}" class="btn btn-light btn-sm">
         <i class="fa fa-pen"></i> Editar OS
@@ -26,14 +139,16 @@
       <p><strong>Contrato:</strong> {{ ordem.contrato.numero }}</p>
       <p><strong>Local:</strong> {{ ordem.local.nome }}</p>
       <p><strong>Data Início:</strong> {{ ordem.data_inicio|date:"d/m/Y" }}</p>
-      {% if ordem.data_termino %}
-        <p><strong>Data Término:</strong> {{ ordem.data_termino|date:"d/m/Y" }}</p>
+      {% if ordem.situacao == "finalizado" %}
+        <p class="fw-bold text-success">
+          <i class="fa fa-check-circle me-1"></i> Finalizado 
+          {% if ordem.data_termino %}({{ ordem.data_termino|date:"d/m/y" }}){% endif %}
+        </p>
       {% endif %}
       {% if ordem.data_paralisado %}
         <p><strong>Data Paralisado:</strong> {{ ordem.data_paralisado|date:"d/m/Y" }}</p>
         <p><strong>Motivo:</strong> {{ ordem.motivo_pendente_paralisado }}</p>
       {% endif %}
-      <p><strong>Situação:</strong> {{ ordem.get_situacao_display }}</p>
       {% if ordem.observacao %}
         <p><strong>Observações:</strong> {{ ordem.observacao }}</p>
       {% endif %}
@@ -74,7 +189,10 @@
                   </a>
                 </td>
                 <td title="{{ servico.categoria.nome }}">{{ servico.categoria.nome }}</td>
-                <td title="{{ servico.get_situacao_display }}">{{ servico.get_situacao_display }}</td>
+               <td class="text-center align-middle" data-servico-situacao="{{ servico.situacao }}" title="{{ servico.get_situacao_display }}">
+
+                  {{ servico.get_situacao_display }}
+                </td>
                 <td title="{{ servico.quantidade }}">{{ servico.quantidade }}</td>
                 <td title="{{ servico.observacao }}">{{ servico.observacao }}</td>
               </tr>
@@ -88,14 +206,12 @@
     </div>
   </div>
 
-
   <!-- Botão Voltar: mobile -->
-<div class="d-md-none mt-4">
-  <a href="{% url 'dashboard_contrato' ordem.contrato.id %}" class="btn btn-outline-secondary w-100">
-        <i class="fa fa-arrow-left"></i> Voltar ao Contrato</a>
-</div>
-
-</div>
+  <div class="d-md-none mt-4">
+    <a href="{% url 'dashboard_contrato' ordem.contrato.id %}" class="btn btn-outline-secondary w-100">
+      <i class="fa fa-arrow-left"></i> Voltar ao Contrato
+    </a>
+  </div>
 
 </div>
 {% endblock %}

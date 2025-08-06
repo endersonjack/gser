@@ -37,13 +37,12 @@
     <i class="fa fa-plus-circle me-2"></i> Inserir OS
   </a>
 
-  <a href="#" class="d-none d-md-block py-2 px-3 text-white text-decoration-none">
-    <i class="fa fa-search me-2"></i> Pesquisar OS
-  </a>
-
-  <a href="#" class="d-none d-md-block py-2 px-3 text-white text-decoration-none">
-    <i class="fa fa-search me-2"></i> Pesquisar Serviço
-  </a>
+  <a href="{% url 'buscar_os' %}" class="d-block py-2 px-3 text-white text-decoration-none">
+      <i class="fa fa-search me-2"></i> Buscar
+    </a>
+    <a href="{% url 'mapa_ordens_geral' %}" class="d-block py-2 px-3 text-white text-decoration-none">
+  <i class="fa fa-map-marked-alt me-2"></i> Mapa de Ordens
+</a>
 
   <hr class="bg-light" />
 
@@ -84,12 +83,63 @@
 
 <!-- Cards - Status de Ordens -->
     <div class="d-flex flex-wrap gap-3 mb-4 status-cards-container">
-      <div class="card bg-secondary text-white status-card"><div class="card-body"><h3>{{ status_counts.nao_iniciado }}</h3><p>Não Iniciado</p><i class="fa fa-circle card-icon"></i></div></div>
-      <div class="card bg-primary text-white status-card"><div class="card-body"><h3>{{ status_counts.em_andamento }}</h3><p>Em Andamento</p><i class="fa fa-spinner card-icon"></i></div></div>
-      <div class="card bg-warning text-dark status-card"><div class="card-body"><h3>{{ status_counts.pendente }}</h3><p>Pendente/Paralisado</p><i class="fa fa-pause-circle card-icon"></i></div></div>
-      <div class="card bg-danger text-white status-card"><div class="card-body"><h3>{{ status_counts.cancelado }}</h3><p>Cancelado</p><i class="fa fa-times-circle card-icon"></i></div></div>
-      <div class="card bg-success text-white status-card"><div class="card-body"><h3>{{ status_counts.finalizado }}</h3><p>Finalizado</p><i class="fa fa-check-circle card-icon"></i></div></div>
+
+  <a href="{% url 'buscar_os' %}?tipo=os&situacao=nao_iniciado" class="text-decoration-none">
+    <div class="card bg-secondary text-white status-card">
+      <div class="card-body">
+        <h3>{{ status_counts.nao_iniciado }}</h3>
+        <p>Não Iniciado</p>
+        <i class="fa fa-circle card-icon"></i>
+      </div>
     </div>
+  </a>
+
+  <a href="{% url 'buscar_os' %}?tipo=os&situacao=em_andamento" class="text-decoration-none">
+    <div class="card bg-primary text-white status-card">
+      <div class="card-body">
+        <h3>{{ status_counts.em_andamento }}</h3>
+        <p>Em Andamento</p>
+        <i class="fa fa-spinner card-icon"></i>
+      </div>
+    </div>
+  </a>
+
+  <a href="{% url 'buscar_os' %}?tipo=os&situacao=pendente" class="text-decoration-none">
+    <div class="card bg-warning text-dark status-card">
+      <div class="card-body">
+        <h3>{{ status_counts.pendente }}</h3>
+        <p>Pendente/Paralisado</p>
+        <i class="fa fa-pause-circle card-icon"></i>
+      </div>
+    </div>
+  </a>
+
+  <a href="{% url 'buscar_os' %}?tipo=os&situacao=cancelado" class="text-decoration-none">
+    <div class="card bg-danger text-white status-card">
+      <div class="card-body">
+        <h3>{{ status_counts.cancelado }}</h3>
+        <p>Cancelado</p>
+        <i class="fa fa-times-circle card-icon"></i>
+      </div>
+    </div>
+  </a>
+
+  <a href="{% url 'buscar_os' %}?tipo=os&situacao=finalizado" class="text-decoration-none">
+    <div class="card bg-success text-white status-card">
+      <div class="card-body">
+        <h3>{{ status_counts.finalizado }}</h3>
+        <p>Finalizado</p>
+        <i class="fa fa-check-circle card-icon"></i>
+      </div>
+    </div>
+  </a>
+
+</div>
+
+
+
+
+
 
     <!-- Tabela - Últimas Ordens de Serviço -->
 <div class="card mt-4">

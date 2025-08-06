@@ -81,6 +81,7 @@
     <tr>
       <th>Nome</th>
       <th>Endereço</th>
+      <th class="text-center">Mapa</th>
     </tr>
   </thead>
   <tbody>
@@ -92,6 +93,16 @@
         </a>
       </td>
       <td>{{ local.endereco }}</td>
+      <td class="text-center">
+  <a href="{% url 'editar_local' local.id %}" title="Editar Local">
+    {% if local.latitude and local.longitude %}
+      <i class="fa fa-map-marker-alt text-success"></i>
+    {% else %}
+      <i class="fa fa-map-marker-alt text-light"></i>
+    {% endif %}
+  </a>
+</td>
+
     </tr>
     {% endfor %}
   </tbody>

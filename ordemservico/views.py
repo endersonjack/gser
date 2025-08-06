@@ -13,6 +13,7 @@ from django.http import HttpResponse
 from django.template.loader import render_to_string
 from weasyprint import HTML
 
+
 @login_required
 def listar_categorias(request):
     categorias = Categoria.objects.all()
@@ -61,6 +62,7 @@ def criar_ordem_servico(request):
         form = OrdemServicoForm(request.POST)
         if form.is_valid():
             ordem = form.save()
+            sincronizar_situacao_ordem(ordem)
             messages.success(request, "Ordem de serviço criada com sucesso.")
             return redirect('ver_ordem_servico', ordem.id)
     else:
@@ -71,11 +73,45 @@ def criar_ordem_servico(request):
     })
 
 
-
 @login_required
 def ver_ordem_servico(request, ordem_id):
     ordem = get_object_or_404(OrdemServico, id=ordem_id)
-    return render(request, 'ordemservico/ver_ordem_servico.html', {'ordem': ordem})
+    situacao_choices = OrdemServico._meta.get_field('situacao').choices
+
+    if request.method == 'POST':
+        nova = request.POST.get('situacao')
+        data_termino = request.POST.get('data_termino')
+
+        if nova in dict(situacao_choices):
+            # Situação do formulário
+            ordem.situacao = nova
+
+            # Data de término
+            if nova == 'finalizado' and data_termino:
+                ordem.data_termino = data_termino
+            else:
+                ordem.data_termino = None
+
+            ordem.save()
+
+            # Se finalizado manualmente, atualiza serviços também
+            if nova == 'finalizado':
+                for servico in ordem.servicos.all():
+                    servico.situacao = 'finalizado'
+                    servico.save()
+
+            # ⚠️ NÃO chamar sincronizar aqui, pois foi uma escolha manual
+            # sincronizar_situacao_ordem(ordem)
+
+            messages.success(request, 'Situação atualizada com sucesso.')
+            return redirect('ver_ordem_servico', ordem_id=ordem.id)
+
+    return render(request, 'ordemservico/ver_ordem_servico.html', {
+        'ordem': ordem,
+        'situacao_choices': situacao_choices,
+    })
+
+
 
 
 @login_required
@@ -85,18 +121,27 @@ def editar_ordem_servico(request, pk):
     if request.method == 'POST':
         form = OrdemServicoEditForm(request.POST, instance=ordem)
         if form.is_valid():
-            form.save()
+            ordem = form.save()
+
+            # ✅ Se a OS for marcada como finalizada, finaliza todos os serviços
+            if ordem.situacao == 'finalizado':
+                for servico in ordem.servicos.all():
+                    servico.situacao = 'finalizado'
+                    servico.save()
+
+            # ✅ Garante sincronização (ex: reverte OS se houver serviços não finalizados)
+            sincronizar_situacao_ordem(ordem)
+
             messages.success(request, "Ordem de Serviço atualizada com sucesso.")
             return redirect('ver_ordem_servico', ordem_id=ordem.pk)
     else:
         form = OrdemServicoEditForm(instance=ordem)
-        # # desabilita o campo contrato no formulário (para exibição apenas)
-        # form.fields['contrato'].disabled = True
 
     return render(request, 'ordemservico/editar_ordem_servico.html', {
         'form': form,
         'ordem': ordem,
     })
+
 
 
 @login_required
@@ -132,6 +177,7 @@ def adicionar_servicos_ordem(request, ordem_id):
 
         if formset.is_valid():
             formset.save()
+            sincronizar_situacao_ordem(ordem)
             messages.success(request, "Serviço salvo com sucesso.")
 
             if 'encerrar' in request.POST:
@@ -157,6 +203,7 @@ def editar_servico(request, ordem_id, servico_id):
         form = ServicoForm(request.POST, instance=servico)
         if form.is_valid():
             form.save()
+            sincronizar_situacao_ordem(ordem)
             messages.success(request, "Serviço atualizado com sucesso.")
             return redirect('ver_ordem_servico', ordem_id=ordem.id)
         else:
@@ -170,12 +217,12 @@ def editar_servico(request, ordem_id, servico_id):
         'form': form,
     })
 
+@login_required
 def visualizar_servico(request, ordem_id, servico_id):
     ordem = get_object_or_404(OrdemServico, id=ordem_id)
     servico = get_object_or_404(Servico, id=servico_id, ordem=ordem)
 
     situacao_choices = Servico._meta.get_field('situacao').choices
-
     outros_servicos = ordem.servicos.exclude(id=servico.id)
 
     if request.method == 'POST':
@@ -183,13 +230,17 @@ def visualizar_servico(request, ordem_id, servico_id):
         if nova in dict(situacao_choices):
             servico.situacao = nova
             servico.save()
+
+            # ✅ chama sincronização após alterar serviço
+            sincronizar_situacao_ordem(ordem)
+
         return redirect('visualizar_servico', ordem_id=ordem.id, servico_id=servico.id)
 
     return render(request, 'ordemservico/visualizar_servico.html', {
         'ordem': ordem,
         'servico': servico,
         'situacao_choices': situacao_choices,
-        'outros_servicos': outros_servicos,  # ← Aqui!
+        'outros_servicos': outros_servicos,
     })
 
 
@@ -367,3 +418,22 @@ def exportar_resultado_pdf(request):
     response['Content-Disposition'] = 'inline; filename="relatorio_busca.pdf"'
     response.write(result)
     return response
+
+
+### UTILS  ###
+
+def sincronizar_situacao_ordem(ordem):
+    servicos = ordem.servicos.all()
+    if not servicos.exists():
+        return
+
+    todas_finalizadas = all(s.situacao == 'finalizado' for s in servicos)
+    alguma_nao_finalizada = any(s.situacao != 'finalizado' for s in servicos)
+
+    # Só modifica se for coerente
+    if todas_finalizadas and ordem.situacao != 'finalizado':
+        ordem.situacao = 'finalizado'
+        ordem.save()
+    elif not todas_finalizadas and ordem.situacao == 'finalizado':
+        ordem.situacao = 'em_andamento'
+        ordem.save()

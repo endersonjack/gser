@@ -3,46 +3,77 @@
 
 {% block title %}Detalhes do Serviço{% endblock %}
 
+{% block extra_head %}
+<style>
+  .bg-nao_iniciado { background-color: #6c757d !important; color: #fff !important; }
+  .bg-em_andamento { background-color: #0d6efd !important; color: #fff !important; }
+  .bg-pendente,
+  .bg-paralisado { background-color: #ffc107 !important; color: #000 !important; }
+  .bg-finalizado { background-color: #198754 !important; color: #fff !important; }
+  .bg-cancelado { background-color: #dc3545 !important; color: #fff !important; }
+
+  .form-select-sm {
+    min-width: 220px;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const situacao = "{{ servico.situacao }}";
+
+    const select = document.getElementById("situacao");
+    if (select) {
+      select.classList.add("bg-" + situacao, "text-white");
+    }
+
+    const descCard = document.getElementById("descricao-card");
+    if (descCard) {
+      descCard.classList.add("bg-" + situacao, "text-white");
+    }
+  });
+</script>
+{% endblock %}
+
 {% block content %}
 <div class="container py-4">
 
   <!-- Cabeçalho da OS -->
-<div class="card mb-4">
-  <div class="card-header">
-    <div class="d-flex justify-content-between flex-wrap gap-2 align-items-start">
+  <div class="card mb-4">
+    <div class="card-header">
+      <div class="d-flex justify-content-between flex-wrap gap-2 align-items-start">
 
-      <!-- Título -->
-      <h5 class="mb-0">Contrato #{{ ordem.contrato.numero }} - OS #{{ ordem.numero }}</h5>
+        <!-- Título -->
+        <h5 class="mb-0">Contrato #{{ ordem.contrato.numero }} - OS #{{ ordem.numero }}</h5>
 
-      <!-- Botões topo (apenas desktop) -->
-      <div class="d-none d-md-flex flex-wrap align-items-center gap-2">
+        <!-- Botões topo (apenas desktop) -->
+        <div class="d-none d-md-flex flex-wrap align-items-center gap-2">
+          <!-- Situação + Salvar -->
+          <form method="post" class="d-flex align-items-center gap-2 mb-0">
+            {% csrf_token %}
+            <label for="situacao" class="mb-0">Situação:</label>
+            <select name="situacao" id="situacao" class="form-select form-select-sm fw-bold border-0 rounded">
+              {% for key, label in situacao_choices %}
+                <option value="{{ key }}" {% if servico.situacao == key %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-sm btn-outline-primary">Salvar</button>
+          </form>
 
-        <!-- Situação + Salvar -->
-        <form method="post" class="d-flex align-items-center gap-2 mb-0">
-          {% csrf_token %}
-          <label for="situacao" class="mb-0">Situação:</label>
-          <select name="situacao" id="situacao" class="form-select form-select-sm">
-            {% for key, label in situacao_choices %}
-              <option value="{{ key }}" {% if servico.situacao == key %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-          </select>
-          <button type="submit" class="btn btn-sm btn-outline-primary">Salvar</button>
-        </form>
+          <!-- Botão Editar -->
+          <a href="{% url 'editar_servico' ordem.id servico.id %}" class="btn btn-sm btn-primary">
+            <i class="fa fa-edit"></i> Editar
+          </a>
 
-        <!-- Botão Editar -->
-        <a href="{% url 'editar_servico' ordem.id servico.id %}" class="btn btn-sm btn-primary">
-          <i class="fa fa-edit"></i> Editar
-        </a>
-
-        <!-- Voltar -->
-        <a href="{% url 'ver_ordem_servico' ordem.id %}" class="btn btn-sm btn-outline-secondary">
-          <i class="fa fa-arrow-left"></i> Voltar à OS
-        </a>
-
+          <!-- Voltar -->
+          <a href="{% url 'ver_ordem_servico' ordem.id %}" class="btn btn-sm btn-outline-secondary">
+            <i class="fa fa-arrow-left"></i> Voltar à OS
+          </a>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
   <!-- Situação: mobile -->
   <div class="d-block d-md-none mb-4">
@@ -62,10 +93,16 @@
     </form>
   </div>
 
+  <!-- Descrição destacada com cor -->
+  <div class="card mb-4 shadow" id="descricao-card">
+    <div class="card-body">
+      <h5 class="fw-bold mb-0">{{ servico.descricao }}</h5>
+    </div>
+  </div>
+
   <!-- Card de Detalhes do Serviço -->
   <div class="card mb-4">
     <div class="card-body">
-      <h5 class="card-title">{{ servico.descricao }}</h5>
       <p><strong>Categoria:</strong> {{ servico.categoria.nome }}</p>
       <p><strong>Situação:</strong> {{ servico.get_situacao_display }}</p>
       <p><strong>Quantidade:</strong> {{ servico.quantidade }}</p>
@@ -81,51 +118,48 @@
   </div>
 
   <!-- Fotos Associadas -->
-<div class="card mb-4">
-  <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
-    <strong>Fotos Associadas</strong>
-    <a href="{% url 'listar_albuns' ordem.id servico.id %}" class="btn btn-light btn-sm">
-      <i class="fa fa-plus-circle"></i> Adicionar Foto
-    </a>
-  </div>
-  <div class="card-body">
-    {% if servico.albuns.exists %}
-      <div class="row">
-        {% for album in servico.albuns.all %}
-          <div class="col-12 col-md-6 mb-4">
-            <div class="card h-100 shadow-sm">
-              <div class="card-body">
-                <h5 class="card-title text-warning">
-                  <i class="fa fa-folder-open me-2"></i>{{ album.nome }}
-                </h5>
-                <p class="text-muted small mb-2">{{ album.descricao }}</p>
-
-                {% if album.fotos.exists %}
-                  <div class="row g-2 mb-3">
-                    {% for foto in album.fotos.all|slice:":4" %}
-                      <div class="col-3">
-                        <img src="{{ foto.imagem.url }}" class="img-fluid rounded" alt="Foto">
-                      </div>
-                    {% endfor %}
-                  </div>
-                {% else %}
-                  <p class="text-muted">Nenhuma foto adicionada.</p>
-                {% endif %}
-
-                <a href="{% url 'gerenciar_album' ordem.id servico.id album.id %}" class="btn btn-outline-primary btn-sm">
-                  <i class="fa fa-edit"></i> Gerenciar Álbum
-                </a>
+  <div class="card mb-4">
+    <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+      <strong>Fotos Associadas</strong>
+      <a href="{% url 'listar_albuns' ordem.id servico.id %}" class="btn btn-light btn-sm">
+        <i class="fa fa-plus-circle"></i> Adicionar Foto
+      </a>
+    </div>
+    <div class="card-body">
+      {% if servico.albuns.exists %}
+        <div class="row">
+          {% for album in servico.albuns.all %}
+            <div class="col-12 col-md-6 mb-4">
+              <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                  <h5 class="card-title text-warning">
+                    <i class="fa fa-folder-open me-2"></i>{{ album.nome }}
+                  </h5>
+                  <p class="text-muted small mb-2">{{ album.descricao }}</p>
+                  {% if album.fotos.exists %}
+                    <div class="row g-2 mb-3">
+                      {% for foto in album.fotos.all|slice:":4" %}
+                        <div class="col-3">
+                          <img src="{{ foto.imagem.url }}" class="img-fluid rounded" alt="Foto">
+                        </div>
+                      {% endfor %}
+                    </div>
+                  {% else %}
+                    <p class="text-muted">Nenhuma foto adicionada.</p>
+                  {% endif %}
+                  <a href="{% url 'gerenciar_album' ordem.id servico.id album.id %}" class="btn btn-outline-primary btn-sm">
+                    <i class="fa fa-edit"></i> Gerenciar Álbum
+                  </a>
+                </div>
               </div>
             </div>
-          </div>
-        {% endfor %}
-      </div>
-    {% else %}
-      <p class="text-muted">Nenhum álbum cadastrado para este serviço.</p>
-    {% endif %}
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-muted">Nenhum álbum cadastrado para este serviço.</p>
+      {% endif %}
+    </div>
   </div>
-</div>
-
 
   <!-- Outros Serviços da OS -->
   <div class="card mb-4">
@@ -133,50 +167,49 @@
       <strong>Outros Serviços da OS</strong>
     </div>
     <div class="card-body">
-        {% if outros_servicos %}
-          <div class="table-responsive">
-            <table class="table table-striped align-middle">
-              <thead class="table-light">
-                <tr>
-                  <th>#</th>
-                  <th>Descrição</th>
-                  <th>Categoria</th>
-                  <th>Situação</th>
-                  <th>Quantidade</th>
-                  <th>Observação</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for s in outros_servicos %}
-                <tr>
-                  <td>{{ forloop.counter }}</td>
-                  <td>
-                    <a href="{% url 'visualizar_servico' ordem.id s.id %}" class="text-decoration-none text-primary">
-                      {{ s.descricao }}
-                    </a>
-                  </td>
-                  <td>{{ s.categoria.nome }}</td>
-                  <td>{{ s.get_situacao_display }}</td>
-                  <td>{{ s.quantidade }}</td>
-                  <td>{{ s.observacao }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        {% else %}
-          <p class="text-muted">Nenhum outro serviço registrado nesta OS.</p>
-        {% endif %}
-      
+      {% if outros_servicos %}
+        <div class="table-responsive">
+          <table class="table table-striped align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>#</th>
+                <th>Descrição</th>
+                <th>Categoria</th>
+                <th>Situação</th>
+                <th>Quantidade</th>
+                <th>Observação</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in outros_servicos %}
+              <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>
+                  <a href="{% url 'visualizar_servico' ordem.id s.id %}" class="text-decoration-none text-primary">
+                    {{ s.descricao }}
+                  </a>
+                </td>
+                <td>{{ s.categoria.nome }}</td>
+                <td>{{ s.get_situacao_display }}</td>
+                <td>{{ s.quantidade }}</td>
+                <td>{{ s.observacao }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-muted">Nenhum outro serviço registrado nesta OS.</p>
+      {% endif %}
     </div>
   </div>
 
   <!-- Botão Voltar: mobile -->
-<div class="d-md-none mt-4">
-  <a href="{% url 'ver_ordem_servico' ordem.id %}" class="btn btn-outline-secondary w-100">
-    <i class="fa fa-arrow-left"></i> Voltar à Ordem de Serviço
-  </a>
-</div>
+  <div class="d-md-none mt-4">
+    <a href="{% url 'ver_ordem_servico' ordem.id %}" class="btn btn-outline-secondary w-100">
+      <i class="fa fa-arrow-left"></i> Voltar à Ordem de Serviço
+    </a>
+  </div>
 
 </div>
 {% endblock %}

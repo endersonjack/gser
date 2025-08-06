@@ -5,9 +5,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="manifest" href="{% static 'manifest.json' %}">
-<link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
-<link rel="shortcut icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
-<meta name="theme-color" content="#0d6efd" />
+  <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+  <link rel="shortcut icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+  <meta name="theme-color" content="#0d6efd" />
   <title>Inserir Local</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" />
@@ -82,9 +82,29 @@
       <label for="id_nome" class="form-label">Nome do Local</label>
       {{ form.nome }}
     </div>
+
     <div class="mb-3">
       <label for="id_endereco" class="form-label">Endereço</label>
       {{ form.endereco }}
+    </div>
+
+    <div class="mb-3">
+      <label for="id_link_maps" class="form-label">Link do Google Maps</label>
+      {{ form.link_maps }}
+      <div class="form-text">
+        Exemplo: https://www.google.com/maps/place/.../@-5.7944783,-35.211002,...
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label for="id_latitude" class="form-label">Latitude</label>
+        {{ form.latitude }}
+      </div>
+      <div class="col-md-6 mb-3">
+        <label for="id_longitude" class="form-label">Longitude</label>
+        {{ form.longitude }}
+      </div>
     </div>
 
     <!-- Botões - Mobile -->
@@ -101,5 +121,24 @@
 
 <!-- Scripts Bootstrap -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Script para extrair coordenadas -->
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const linkInput = document.getElementById('id_link_maps');
+    const latInput = document.getElementById('id_latitude');
+    const lngInput = document.getElementById('id_longitude');
+
+    linkInput.addEventListener('change', function () {
+      const regex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
+      const match = this.value.match(regex);
+      if (match) {
+        latInput.value = match[1];
+        lngInput.value = match[2];
+      }
+    });
+  });
+</script>
+
 </body>
 </html>
