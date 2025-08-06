@@ -26,7 +26,7 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 COPY . .
 
 # Coleta os arquivos estáticos (se necessário)
-RUN python manage.py collectstatic --noinput
+RUN python manage.py migrate && python manage.py collectstatic --noinput
 
 # Expõe a porta padrão
 EXPOSE 8000
