@@ -45,6 +45,7 @@ urlpatterns = [
     path('contrato/<int:id>/mapa-ordens/', mapa_ordens_contrato, name='mapa_ordens_contrato'),
     path('mapa-geral/', mapa_ordens_geral, name='mapa_ordens_geral'),
 
+    path('api/mapa-ordens-geral/', api_mapa_ordens_geral, name='api_mapa_ordens_geral'),
 
 
 

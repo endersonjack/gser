@@ -75,6 +75,27 @@
       max-width: calc(100vw - 260px);
     }
   }
+
+  #mapa-container {
+  position: relative;
+}
+
+#map.map-normal {
+  height: 70vh;
+  border-radius: 10px;
+  width: 100%;
+}
+
+#map.map-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 1050;
+  border-radius: 0;
+}
+
 </style>
 {% endblock %}
 
@@ -150,18 +171,98 @@
 
   <!-- Conteúdo principal -->
   <div class="main-content">
+ 
+
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
-      <div>
-        <h4 class="mb-1"><i class="fa fa-map-marked-alt me-2"></i> Mapa Geral de Ordens</h4>
-        <p class="text-muted mb-0 small">
-          Visualização de todas as ordens de serviço cadastradas no sistema.
-        </p>
-      </div>
-    </div>
+  <div>
+    <h4 class="mb-1"><i class="fa fa-map-marked-alt me-2"></i> Mapa Geral de Ordens</h4>
+    <p class="text-muted mb-0 small">
+      Visualização de todas as ordens de serviço cadastradas no sistema.
+    </p>
+  </div>
+
+  <!-- Contador no canto superior direito -->
+  <div class="text-end">
+    <span class="badge bg-secondary small">Atualizando em <span id="tempo-restante">30</span>s</span>
+  </div>
+</div>
+   <script>
+      let segundosRestantes = 30;
+    const contadorSpan = document.getElementById('tempo-restante');
+
+    // Atualiza o contador visível
+    setInterval(() => {
+      segundosRestantes--;
+      if (segundosRestantes <= 0) {
+        segundosRestantes = 30;
+      }
+      if (contadorSpan) contadorSpan.textContent = segundosRestantes;
+    }, 1000);
+
+    // Recarrega os dados e reinicia o contador
+    function carregarDados() {
+      fetch("{% url 'api_mapa_ordens_geral' %}")
+        .then(res => res.json())
+        .then(data => {
+          marcadores = data.marcadores;
+          aplicarFiltros();
+          segundosRestantes = 30;  // reinicia contagem após atualizar
+        });
+    }
+
+    </script>
+
+
 
     <div class="card shadow-sm">
       <div class="card-body">
-        <div id="map"></div>
+       
+        
+          <div id="mapa-container" class="position-relative">
+          <div id="map" class="map-normal"></div>
+          
+          <!-- Botão para ampliar -->
+          <button id="btn-expandir" class="btn btn-light btn-sm position-absolute top-0 end-0 m-2 d-none d-md-block">
+            <i class="fa fa-expand"></i> Ampliar
+          </button>
+
+          <!-- Botão para fechar -->
+          <button id="btn-fechar" class="btn btn-light btn-sm position-absolute top-0 end-0 m-2 d-none" style="z-index:9999;">
+            <i class="fa fa-times"></i> Fechar
+          </button>
+        </div>
+
+        <script>
+          const btnExpandir = document.getElementById("btn-expandir");
+          const btnFechar = document.getElementById("btn-fechar");
+          const mapaDiv = document.getElementById("map");
+
+          btnExpandir.addEventListener("click", () => {
+            mapaDiv.classList.remove("map-normal");
+            mapaDiv.classList.add("map-fullscreen");
+            btnExpandir.classList.add("d-none");
+            btnFechar.classList.remove("d-none");
+
+            setTimeout(() => {
+              map.invalidateSize();
+            }, 300);
+          });
+
+          btnFechar.addEventListener("click", () => {
+            mapaDiv.classList.remove("map-fullscreen");
+            mapaDiv.classList.add("map-normal");
+            btnExpandir.classList.remove("d-none");
+            btnFechar.classList.add("d-none");
+
+            setTimeout(() => {
+              map.invalidateSize();
+            }, 300);
+          });
+
+        </script>
+
+
+
       </div>
     </div>
   </div>
@@ -183,9 +284,8 @@
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    const marcadores = {{ marcadores|safe }};
+    let marcadores = [];
     const markerGroup = L.featureGroup().addTo(map);
-
     const cores = {
       "não iniciado": "gray",
       "em andamento": "blue",
@@ -195,29 +295,24 @@
       "finalizado": "green"
     };
 
-    // Mapear coordenadas já usadas
-    const posicoesUsadas = {};
-
-    function getCheckedValues(classe) {
-      return Array.from(document.querySelectorAll(`.${classe}:checked`)).map(input => input.value.toLowerCase());
+    function getChecked(classe) {
+      return Array.from(document.querySelectorAll(`.${classe}:checked`)).map(i => i.value.toLowerCase());
     }
 
     function aplicarFiltros() {
       markerGroup.clearLayers();
+      const posicoesUsadas = {};
 
-      const situacoes = getCheckedValues("filtro-situacao");
-      const contratos = getCheckedValues("filtro-contrato");
+      const situacoes = getChecked("filtro-situacao");
+      const contratos = getChecked("filtro-contrato");
 
       marcadores.forEach(item => {
         const situacao = item.situacao.toLowerCase();
         const contrato = item.contrato.toLowerCase();
 
-        const incluiSituacao = situacoes.some(s => situacao.includes(s));
-        const incluiContrato = contratos.length === 0 || contratos.includes(contrato);
+        if (!situacoes.some(s => situacao.includes(s))) return;
+        if (contratos.length && !contratos.includes(contrato)) return;
 
-        if (!incluiSituacao || !incluiContrato) return;
-
-        // Detectar coordenadas repetidas e aplicar deslocamento em espiral
         let lat = parseFloat(item.lat);
         let lng = parseFloat(item.lng);
         const chave = `${lat.toFixed(6)},${lng.toFixed(6)}`;
@@ -226,10 +321,8 @@
           const count = posicoesUsadas[chave];
           const angle = (count * 45) * (Math.PI / 180);
           const radius = 0.0002 * count;
-
           lat += radius * Math.sin(angle);
           lng += radius * Math.cos(angle);
-
           posicoesUsadas[chave] += 1;
         } else {
           posicoesUsadas[chave] = 1;
@@ -257,13 +350,24 @@
       }
     }
 
+    function carregarDados() {
+      fetch("{% url 'api_mapa_ordens_geral' %}")
+        .then(res => res.json())
+        .then(data => {
+          marcadores = data.marcadores;
+          aplicarFiltros();
+        });
+    }
+
     document.querySelectorAll('.filtro-situacao, .filtro-contrato').forEach(input => {
       input.addEventListener('change', aplicarFiltros);
     });
 
-    aplicarFiltros();
+    carregarDados();                      // Carrega ao entrar
+    setInterval(carregarDados, 30000);    // Atualiza a cada 30s
   });
 </script>
+
 
 
 

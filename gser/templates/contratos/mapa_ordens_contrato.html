@@ -63,15 +63,41 @@
       padding: 15px;
     }
   }
+  #mapa-container {
+  position: relative;
+}
+
+#map.map-normal {
+  height: 70vh;
+  border-radius: 10px;
+  width: 100%;
+}
+
+#map.map-fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 1050;
+  border-radius: 0;
+}
+body.mapa-ampliado .sidebar {
+  display: none !important;
+}
+
+
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="wrapper flex-column flex-md-row">
 
-  <!-- Sidebar (desktop only) -->
+  <!-- Sidebar -->
   <div class="sidebar d-none d-md-block">
-    <a href="{% url 'dashboard_contrato' contrato.id %}"><i class="fa fa-arrow-left me-2"></i> Voltar ao Painel</a>
+    <a href="{% url 'dashboard_geral' %}" class="py-2 px-3 text-white text-decoration-none d-block">
+      <i class="fa fa-arrow-left me-2"></i> Voltar ao Painel
+    </a>
     <a href="{% url 'criar_ordem_servico' %}" class="btn btn-success w-100 mb-3">
       <i class="fa fa-plus-circle me-2"></i> Nova O.S.
     </a>
@@ -123,23 +149,74 @@
 
   <!-- Conteúdo -->
   <div class="main-content">
+
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
-      <div>
-        <h4 class="mb-1"><i class="fa fa-map-marked-alt me-2"></i> Mapa de Ordens</h4>
-        <p class="text-muted mb-0 small">
-          <strong>Contrato:</strong> {{ contrato.numero }}<br>
-          <strong>Empresa:</strong> {{ contrato.empresa_contratada }} |
-          <strong>Órgão:</strong> {{ contrato.orgao_contratante }}
-        </p>
-      </div>
-      <a href="{% url 'dashboard_contrato' contrato.id %}" class="btn btn-outline-secondary d-none d-md-inline">
-        <i class="fa fa-arrow-left"></i> Voltar ao Painel
-      </a>
-    </div>
+  <div>
+    <h4 class="mb-1">
+      <i class="fa fa-map-marked-alt me-2"></i> Mapa de Ordens
+    </h4>
+    <p class="text-muted mb-0 small">
+      <strong>Contrato:</strong> {{ contrato.numero }}<br>
+      <strong>Empresa:</strong> {{ contrato.empresa_contratada }} |
+      <strong>Órgão:</strong> {{ contrato.orgao_contratante }}
+    </p>
+  </div>
+
+  <!-- Contador no canto superior direito -->
+  <div class="text-end">
+    <span class="badge bg-secondary small">Atualizando em <span id="tempo-restante">30</span>s</span>
+  </div>
+</div>
+
+
+
+
+
+    <script>
+      let segundosRestantes = 30;
+    const contadorSpan = document.getElementById('tempo-restante');
+
+    // Atualiza o contador visível
+    setInterval(() => {
+      segundosRestantes--;
+      if (segundosRestantes <= 0) {
+        segundosRestantes = 30;
+      }
+      if (contadorSpan) contadorSpan.textContent = segundosRestantes;
+    }, 1000);
+
+    // Recarrega os dados e reinicia o contador
+    function carregarDados() {
+      fetch("{% url 'api_mapa_ordens_geral' %}")
+        .then(res => res.json())
+        .then(data => {
+          marcadores = data.marcadores;
+          aplicarFiltros();
+          segundosRestantes = 30;  // reinicia contagem após atualizar
+        });
+    }
+
+    </script>
 
     <div class="card shadow-sm">
       <div class="card-body">
-        <div id="map"></div>
+        <div class="card shadow-sm">
+ <div class="card-body">
+  <div id="mapa-container">
+    <div id="map" class="map-normal"></div>
+
+    <!-- Botão: Ampliar -->
+    <button id="btn-expandir" class="btn btn-light btn-sm position-absolute top-0 end-0 m-2 d-none d-md-block" title="Ampliar Mapa">
+      <i class="fa fa-expand"></i>
+    </button>
+
+    <!-- Botão: Fechar -->
+    <button id="btn-fechar" class="btn btn-light btn-sm position-absolute top-0 end-0 m-2 d-none" title="Fechar Mapa" style="z-index: 2000;">
+      <i class="fa fa-times"></i>
+    </button>
+  </div>
+</div>
+
       </div>
     </div>
   </div>
@@ -152,16 +229,47 @@
 <script src="https://unpkg.com/leaflet.awesome-markers@2.0.5/dist/leaflet.awesome-markers.min.js"></script>
 
 <script>
-  window.addEventListener("load", function () {
-    const map = L.map('map').setView([-5.8, -35.2], 11);
-    setTimeout(() => map.invalidateSize(), 200);
+  let map;
+
+  function inicializarMapa() {
+    map = L.map('map').setView([-5.8, -35.2], 11);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 18,
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
+  }
 
-    const marcadores = {{ marcadores|safe }};
+  document.addEventListener("DOMContentLoaded", function () {
+    inicializarMapa();
+
+    const mapaDiv = document.getElementById("map");
+    const btnExpandir = document.getElementById("btn-expandir");
+    const btnFechar = document.getElementById("btn-fechar");
+
+    btnExpandir.addEventListener("click", () => {
+      mapaDiv.classList.remove("map-normal");
+      mapaDiv.classList.add("map-fullscreen");
+      document.body.classList.add("mapa-ampliado");
+
+      btnExpandir.classList.add("d-none");
+      btnFechar.classList.remove("d-none");
+
+      setTimeout(() => map.invalidateSize(), 300);
+    });
+
+    btnFechar.addEventListener("click", () => {
+      mapaDiv.classList.remove("map-fullscreen");
+      mapaDiv.classList.add("map-normal");
+      document.body.classList.remove("mapa-ampliado");
+
+      btnExpandir.classList.remove("d-none");
+      btnFechar.classList.add("d-none");
+
+      setTimeout(() => map.invalidateSize(), 300);
+    });
+
+    let marcadores = [];
     const markerGroup = L.featureGroup().addTo(map);
 
     const cores = {
@@ -173,34 +281,34 @@
       "finalizado": "green"
     };
 
-    const posicoesUsadas = {};
-
-    function getCheckedSituacoes() {
-      return Array.from(document.querySelectorAll('.filtro-situacao:checked')).map(i => i.value.toLowerCase());
+    function getChecked(classe) {
+      return Array.from(document.querySelectorAll(`.${classe}:checked`)).map(i => i.value.toLowerCase());
     }
 
     function aplicarFiltros() {
       markerGroup.clearLayers();
+      const posicoesUsadas = {};
 
-      const situacoesSelecionadas = getCheckedSituacoes();
+      const situacoes = getChecked("filtro-situacao");
+      const contratos = getChecked("filtro-contrato");
 
       marcadores.forEach(item => {
         const situacao = item.situacao.toLowerCase();
-        if (!situacoesSelecionadas.some(s => situacao.includes(s))) return;
+        const contrato = item.contrato.toLowerCase();
 
-        // Afastamento de marcadores repetidos
+        if (!situacoes.some(s => situacao.includes(s))) return;
+        if (contratos.length && !contratos.includes(contrato)) return;
+
         let lat = parseFloat(item.lat);
         let lng = parseFloat(item.lng);
         const chave = `${lat.toFixed(6)},${lng.toFixed(6)}`;
 
         if (posicoesUsadas[chave]) {
           const count = posicoesUsadas[chave];
-          const angle = (count * 45) * (Math.PI / 180); // ângulo em rad
-          const radius = 0.0002 * count; // distância
-
+          const angle = (count * 45) * (Math.PI / 180);
+          const radius = 0.0002 * count;
           lat += radius * Math.sin(angle);
           lng += radius * Math.cos(angle);
-
           posicoesUsadas[chave] += 1;
         } else {
           posicoesUsadas[chave] = 1;
@@ -217,7 +325,8 @@
         marker.bindPopup(`
           <strong><a href="${item.url}" class="text-decoration-none">${item.local_nome}</a></strong><br/>
           <a href="${item.url}" class="text-primary text-decoration-none">O.S. Nº <strong>${item.numero}</strong></a><br/>
-          Situação: ${item.situacao}
+          Situação: ${item.situacao}<br/>
+          Contrato: ${item.contrato}
         `);
         markerGroup.addLayer(marker);
       });
@@ -227,13 +336,34 @@
       }
     }
 
-    document.querySelectorAll('.filtro-situacao').forEach(checkbox => {
-      checkbox.addEventListener('change', aplicarFiltros);
+    function carregarDados() {
+      fetch("{% url 'api_mapa_ordens_geral' %}")
+        .then(res => res.json())
+        .then(data => {
+          marcadores = data.marcadores;
+          aplicarFiltros();
+          segundosRestantes = 30;
+        });
+    }
+
+    // Atualização periódica + contador
+    let segundosRestantes = 30;
+    const contadorSpan = document.getElementById('tempo-restante');
+
+    setInterval(() => {
+      segundosRestantes--;
+      if (segundosRestantes <= 0) {
+        carregarDados();
+        segundosRestantes = 30;
+      }
+      if (contadorSpan) contadorSpan.textContent = segundosRestantes;
+    }, 1000);
+
+    document.querySelectorAll('.filtro-situacao, .filtro-contrato').forEach(input => {
+      input.addEventListener('change', aplicarFiltros);
     });
 
-    aplicarFiltros();
+    carregarDados();
   });
 </script>
-
-
 {% endblock %}

@@ -86,7 +86,7 @@ def dashboard_contrato(request, id):
     contrato = get_object_or_404(Contrato, id=id)
     request.session['contrato_id'] = id
 
-    ordens = OrdemServico.objects.filter(contrato=contrato)
+    ordens = OrdemServico.objects.filter(contrato=contrato).select_related('local')
 
     status_counts = {
         "nao_iniciado": ordens.filter(situacao="nao_iniciado").count(),
@@ -100,10 +100,7 @@ def dashboard_contrato(request, id):
     total_servicos = Servico.objects.filter(ordem__contrato=contrato).count()
     ultima_os = ordens.order_by('-id').first()
 
-    if total_os > 0:
-        percentual_finalizadas = round((status_counts['finalizado'] / total_os) * 100)
-    else:
-        percentual_finalizadas = 0
+    percentual_finalizadas = round((status_counts['finalizado'] / total_os) * 100) if total_os > 0 else 0
 
     status_info = {
         "nao_iniciado": {"label": "Não Iniciado", "color": "secondary", "icon": "circle"},
@@ -115,24 +112,22 @@ def dashboard_contrato(request, id):
 
     status_list = list(status_info.keys())
 
-    ultimos_servicos = Servico.objects.filter(
-        ordem__contrato=contrato
-    ).select_related('ordem__local', 'categoria').order_by('-id')[:10]
+    ultimas_ordens = ordens.order_by('-id')[:10]  # ← Substituindo por ordens
 
     context = {
         'contrato': contrato,
         'status_counts': status_counts,
         'status_info': status_info,
         'status_list': status_list,
-        'ultimos_servicos': ultimos_servicos,
+        'ultimas_ordens': ultimas_ordens,  # ← Aqui também
         'total_os': total_os,
         'total_servicos': total_servicos,
         'ultima_os': ultima_os,
         'percentual_finalizadas': percentual_finalizadas,
     }
-    
 
     return render(request, 'contratos/dashboard_contrato.html', context)
+
 
 @login_required
 def mapa_ordens_contrato(request, id):
@@ -187,3 +182,27 @@ def mapa_ordens_geral(request):
         'marcadores': json.dumps(locais_com_coords),
         'contratos': contratos,
     })
+
+
+from django.http import JsonResponse
+
+@login_required
+def api_mapa_ordens_geral(request):
+    ordens = OrdemServico.objects.select_related('local', 'contrato')
+
+    locais_com_coords = []
+    for ordem in ordens:
+        local = ordem.local
+        if local and local.latitude and local.longitude:
+            locais_com_coords.append({
+                'id': ordem.id,
+                'numero': getattr(ordem, 'numero_formatado', str(ordem.numero).zfill(4)),
+                'local_nome': local.nome,
+                'lat': float(local.latitude),
+                'lng': float(local.longitude),
+                'situacao': ordem.get_situacao_display(),
+                'contrato': ordem.contrato.numero,
+                'url': reverse('ver_ordem_servico', args=[ordem.id])
+            })
+
+    return JsonResponse({'marcadores': locais_com_coords})
