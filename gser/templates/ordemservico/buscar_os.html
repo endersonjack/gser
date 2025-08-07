@@ -47,7 +47,7 @@
         <div class="accordion-body">
 
           <!-- Formulário OS -->
-          <form method="get" class="mb-4">
+          <form method="get" class="mb-4" id="formBusca" >
             <input type="hidden" name="tipo" value="os">
             <div class="row g-3">
               <div class="col-md-4">
@@ -216,6 +216,10 @@
 <!-- JS: Clique na linha -->
 <script>
   document.addEventListener('DOMContentLoaded', function () {
+
+    
+
+
     document.querySelectorAll('.clickable-row').forEach(function (row) {
       row.addEventListener('click', function () {
         window.location.href = row.dataset.href;

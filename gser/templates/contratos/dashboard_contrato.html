@@ -1,4 +1,5 @@
 {% load static %}
+{% load i18n %}
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -267,7 +268,10 @@
     </div>
   </div>
 
+
 </div>
+
+
 
 
     <!-- Cards + Tabela -->
@@ -275,47 +279,50 @@
 
 
 
-      <!-- Tabela - Últimas Ordens de Serviço -->
-<div class="card mt-4 order-1 order-md-2">
-  <div class="card-body">
-    <h5 class="card-title d-flex justify-content-between align-items-center">
-      Últimas Ordens de Serviço Adicionadas
-      <a href="#" class="btn btn-outline-primary btn-sm" aria-label="Ver todas as ordens de serviço">Ver Todas</a>
-    </h5>
-    <p class="text-muted small">Exibindo as 10 ordens mais recentes deste contrato.</p>
+            <!-- Tabela - Últimas Ordens de Serviço -->
+      <div class="card mt-4 order-1 order-md-2">
+        <div class="card-body">
+          <h5 class="card-title d-flex justify-content-between align-items-center">
+            Últimas Ordens de Serviço Adicionadas
+      <a href="{% url 'buscar_os' %}?contrato={{ contrato.id }}" class="btn btn-outline-primary btn-sm">
+        Ver Todas
+      </a>
 
-    <div class="table-responsive">
-      <table class="table table-bordered table-hover table-striped align-middle">
-        <thead class="table-light">
-          <tr>
-            <th>#</th>
-            <th>Nº OS</th>
-            <th>Localidade</th>
-            <th>Início</th>
-            <th>Situação</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for ordem in ultimas_ordens %}
-          <tr>
-            <td>{{ forloop.counter }}</td>
-            <td>
-              <a href="{% url 'ver_ordem_servico' ordem.id %}">
-                {{ ordem.numero_formatado }}
-              </a>
-            </td>
-            <td>{{ ordem.local.nome|default:"-" }}</td>
-            <td>{{ ordem.data_inicio|date:"d/m/Y" }}</td>
-            <td>{{ ordem.get_situacao_display }}</td>
-          </tr>
-          {% empty %}
-          <tr><td colspan="5" class="text-center text-muted">Nenhuma ordem encontrada.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
+          </h5>
+          <p class="text-muted small">Exibindo as 10 ordens mais recentes deste contrato.</p>
+
+          <div class="table-responsive">
+            <table class="table table-bordered table-hover table-striped align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>#</th>
+                  <th>Nº OS</th>
+                  <th>Localidade</th>
+                  <th>Início</th>
+                  <th>Situação</th>
+                </tr>
+              <tbody>
+              </thead>
+                {% for ordem in ultimas_ordens %}
+                <tr>
+                  <td>{{ forloop.counter }}</td>
+                  <td>
+                    <a href="{% url 'ver_ordem_servico' ordem.id %}">
+                      {{ ordem.numero_formatado }}
+                    </a>
+                  </td>
+                  <td>{{ ordem.local.nome|default:"-" }}</td>
+                  <td>{{ ordem.data_inicio|date:"d/m/Y" }}</td>
+                  <td>{{ ordem.get_situacao_display }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center text-muted">Nenhuma ordem encontrada.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
 
       
@@ -337,7 +344,55 @@
 
 
     </div>
-    
+
+    <!-- Alertas Visuais - Após Tabela -->
+{% if ordens_sem_servicos or top_5_ordens_antigas %}
+<div class="row row-cols-1 row-cols-md-2 g-3 my-4">
+
+  {% if ordens_sem_servicos %}
+  <div class="col">
+    <div class="card border-danger h-100">
+      <div class="card-body">
+        <h6 class="card-title text-danger mb-3">
+          <i class="fa fa-ban me-2"></i> OS sem serviços cadastrados
+        </h6>
+        <ul class="list-unstyled small mb-0">
+          {% for os in ordens_sem_servicos %}
+          <li>
+            <a href="{% url 'ver_ordem_servico' os.id %}">#{{ os.numero_formatado }}</a>
+            <span class="text-muted">– {{ os.local.nome }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if top_5_ordens_antigas %}
+  <div class="col">
+    <div class="card border-secondary h-100">
+      <div class="card-body">
+        <h6 class="card-title text-muted mb-3">
+          <i class="fa fa-clock me-2"></i> Top 5 OS mais antigas em <strong>Não Iniciado</strong>
+        </h6>
+        <ul class="list-unstyled small mb-0">
+          {% for os in top_5_ordens_antigas %}
+          <li>
+            <a href="{% url 'ver_ordem_servico' os.id %}">#{{ os.numero_formatado }}</a>
+            <span class="text-muted">– há {{ os.tempo_espera }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endif %}
+
+
 
     <!-- Rodapé -->
     <div class="text-center mt-5 mb-3 text-muted small">

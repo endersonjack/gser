@@ -12,6 +12,7 @@ from .forms import AlbumForm, FotoForm
 from django.http import HttpResponse
 from django.template.loader import render_to_string
 from weasyprint import HTML
+from datetime import date
 
 
 @login_required
@@ -437,3 +438,12 @@ def sincronizar_situacao_ordem(ordem):
     elif not todas_finalizadas and ordem.situacao == 'finalizado':
         ordem.situacao = 'em_andamento'
         ordem.save()
+
+
+@login_required
+def imprimir_ordem_servico(request, ordem_id):
+    ordem = get_object_or_404(OrdemServico, id=ordem_id)
+    return render(request, 'ordemservico/imprimir_ordem_servico.html', {
+        'ordem': ordem,
+        'hoje': date.today()
+    })

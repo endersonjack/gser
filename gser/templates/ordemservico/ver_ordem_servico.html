@@ -131,6 +131,9 @@
   <div class="card mb-4">
     <div id="header-ordem" class="card-header d-flex justify-content-between align-items-center">
       <strong>Dados da Ordem de Serviço</strong>
+      <a href="{% url 'imprimir_ordem_servico' ordem.id %}" class="btn btn-outline-dark btn-sm">
+  <i class="fa fa-print"></i> Imprimir
+</a>
       <a href="{% url 'editar_ordem_servico' ordem.id %}" class="btn btn-light btn-sm">
         <i class="fa fa-pen"></i> Editar OS
       </a>

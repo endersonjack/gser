@@ -29,7 +29,7 @@ PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 SECRET_KEY = os.environ["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ["DEBUG"]
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split()
 
@@ -139,7 +139,8 @@ CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS').split()
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'pt-br'
+USE_L10N = True
 
 TIME_ZONE = 'UTC'
 
@@ -153,17 +154,14 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
-
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'media')
 
 
-# if DEBUG:
-# 	STATICFILES_DIRS = [
-# 		os.path.join(PROJECT_ROOT, 'static')
-#        ]
-# else:
-# 	STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
+
+if DEBUG:
+	MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'media')
+else:
+	MEDIA_ROOT = '/mnt/data/media/'  # ← isso garante que salve dentro do volume
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

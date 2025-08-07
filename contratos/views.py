@@ -8,6 +8,7 @@ from ordemservico.models import Servico
 from django.urls import reverse
 import json
 from django.db.models import Count
+from django.utils.timesince import timesince
 
 
 
@@ -81,13 +82,29 @@ def dashboard_geral(request):
     return render(request, 'contratos/dashboard_geral.html', context)
 
 
+from datetime import timedelta
+from django.utils import timezone
+from django.db.models import Count
+
 @login_required
 def dashboard_contrato(request, id):
     contrato = get_object_or_404(Contrato, id=id)
     request.session['contrato_id'] = id
 
-    ordens = OrdemServico.objects.filter(contrato=contrato).select_related('local')
+    ordens = OrdemServico.objects.filter(contrato=contrato)
 
+    # === ALERTAS ===
+    hoje = timezone.now().date()
+    ordens_30_dias = ordens.filter(situacao="nao_iniciado", data_inicio__lt=hoje - timedelta(days=30))
+    ordens_sem_servicos = ordens.annotate(qtd_servicos=Count('servicos')).filter(qtd_servicos=0)
+
+    # Calcula texto do tipo "há X dias"
+    top_5_ordens_antigas = ordens.filter(situacao="nao_iniciado").order_by('data_inicio')[:5]
+    for os in top_5_ordens_antigas:
+        dias = (hoje - os.data_inicio).days
+        os.tempo_espera = f"{dias} dia{'s' if dias != 1 else ''}"
+
+    # === DEMAIS DADOS ===
     status_counts = {
         "nao_iniciado": ordens.filter(situacao="nao_iniciado").count(),
         "em_andamento": ordens.filter(situacao="em_andamento").count(),
@@ -98,9 +115,9 @@ def dashboard_contrato(request, id):
 
     total_os = ordens.count()
     total_servicos = Servico.objects.filter(ordem__contrato=contrato).count()
-    ultima_os = ordens.order_by('-id').first()
+    ultimas_ordens = ordens.order_by('-id')[:10]
 
-    percentual_finalizadas = round((status_counts['finalizado'] / total_os) * 100) if total_os > 0 else 0
+    percentual_finalizadas = round((status_counts['finalizado'] / total_os) * 100) if total_os else 0
 
     status_info = {
         "nao_iniciado": {"label": "Não Iniciado", "color": "secondary", "icon": "circle"},
@@ -110,23 +127,25 @@ def dashboard_contrato(request, id):
         "finalizado": {"label": "Finalizado", "color": "success", "icon": "check-circle"},
     }
 
-    status_list = list(status_info.keys())
-
-    ultimas_ordens = ordens.order_by('-id')[:10]  # ← Substituindo por ordens
+    ultimos_servicos = Servico.objects.filter(ordem__contrato=contrato).select_related('ordem__local', 'categoria').order_by('-id')[:10]
 
     context = {
         'contrato': contrato,
         'status_counts': status_counts,
         'status_info': status_info,
-        'status_list': status_list,
-        'ultimas_ordens': ultimas_ordens,  # ← Aqui também
         'total_os': total_os,
         'total_servicos': total_servicos,
-        'ultima_os': ultima_os,
+        'ultimas_ordens': ultimas_ordens,
         'percentual_finalizadas': percentual_finalizadas,
+        'ultimos_servicos': ultimos_servicos,
+        # ALERTAS:
+        'ordens_30_dias': ordens_30_dias,
+        'ordens_sem_servicos': ordens_sem_servicos,
+        'top_5_ordens_antigas': top_5_ordens_antigas,
     }
 
     return render(request, 'contratos/dashboard_contrato.html', context)
+
 
 
 @login_required
