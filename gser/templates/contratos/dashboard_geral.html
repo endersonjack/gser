@@ -58,23 +58,29 @@
 {% block content %}
 <div class="wrapper flex-column flex-md-row">
 
-  <!-- Sidebar -->
-  <div class="sidebar bg-dark p-2">
+  <div class="sidebar bg-dark p-2 d-flex flex-column justify-content-between">
+  
+  <!-- Sidebar Parte de cima -->
+  <div>
     <a href="{% url 'contratos' %}" class="d-none d-md-block py-2 px-3 text-white text-decoration-none">
       <i class="fa fa-arrow-left me-2"></i> Contratos
     </a>
-
     <a href="{% url 'criar_ordem_servico' %}" class="btn btn-success btn-sm w-100 text-start my-2 d-none d-md-block">
       <i class="fa fa-plus-circle me-2"></i> Inserir OS
     </a>
-
     <a href="{% url 'buscar_os' %}" class="d-block py-2 px-3 text-white text-decoration-none">
       <i class="fa fa-search me-2"></i> Buscar
     </a>
 
+    {% if contrato %}
+    <a href="{% url 'mapa_ordens_contrato' contrato.id %}" class="d-block py-2 px-3 text-white text-decoration-none">
+      <i class="fa fa-map-marked-alt me-2"></i> Mapa de Ordens
+    </a>
+    {% else %}
     <a href="{% url 'mapa_ordens_geral' %}" class="d-block py-2 px-3 text-white text-decoration-none">
       <i class="fa fa-map-marked-alt me-2"></i> Mapa de Ordens
     </a>
+    {% endif %}
 
     <hr class="bg-light" />
 
@@ -87,6 +93,11 @@
       </a>
     </div>
   </div>
+
+  <!-- Rodapé fixo embaixo -->
+  {% include "includes/sidebar_footer.html" %}
+</div>
+
 
   <!-- Main Content -->
   <div class="main-content">

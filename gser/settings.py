@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'contratos',
     'local',
     'ordemservico',
+    'configuracoes',
 
 ]
 

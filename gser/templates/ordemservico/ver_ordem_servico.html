@@ -131,12 +131,27 @@
   <div class="card mb-4">
     <div id="header-ordem" class="card-header d-flex justify-content-between align-items-center">
       <strong>Dados da Ordem de Serviço</strong>
-      <a href="{% url 'imprimir_ordem_servico' ordem.id %}" class="btn btn-outline-dark btn-sm">
-  <i class="fa fa-print"></i> Imprimir
-</a>
-      <a href="{% url 'editar_ordem_servico' ordem.id %}" class="btn btn-light btn-sm">
-        <i class="fa fa-pen"></i> Editar OS
+
+      <!-- Botão Dropdown de Ações -->
+<div class="dropdown">
+  <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+    <i class="fa fa-cog"></i> Ações
+  </button>
+  <ul class="dropdown-menu">
+    <li>
+      <a class="dropdown-item" href="{% url 'editar_ordem_servico' ordem.id %}">
+        <i class="fa fa-pen me-2"></i> Editar Dados da OS
       </a>
+    </li>
+    <li>
+      <a class="dropdown-item" href="{% url 'imprimir_ordem_servico' ordem.id %}" target="_blank">
+        <i class="fa fa-print me-2"></i> Imprimir OS
+      </a>
+    </li>
+  </ul>
+</div>
+
+            
     </div>
     <div class="card-body">
       <p><strong>Contrato:</strong> {{ ordem.contrato.numero }}</p>

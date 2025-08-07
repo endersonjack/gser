@@ -159,7 +159,11 @@
 
 <div class="wrapper flex-column flex-md-row">
 
-  <div class="sidebar bg-dark p-2 order-5 order-md-1">
+  <!-- SIDEBAR -->
+  <div class="sidebar bg-dark p-2 d-flex flex-column justify-content-between">
+  
+  <!-- Parte de cima -->
+  <div>
     <a href="{% url 'contratos' %}" class="d-none d-md-block py-2 px-3 text-white text-decoration-none">
       <i class="fa fa-arrow-left me-2"></i> Contratos
     </a>
@@ -169,11 +173,19 @@
     <a href="{% url 'buscar_os' %}" class="d-block py-2 px-3 text-white text-decoration-none">
       <i class="fa fa-search me-2"></i> Buscar
     </a>
+
+    {% if contrato %}
     <a href="{% url 'mapa_ordens_contrato' contrato.id %}" class="d-block py-2 px-3 text-white text-decoration-none">
-  <i class="fa fa-map-marked-alt me-2"></i> Mapa de Ordens
-</a>
+      <i class="fa fa-map-marked-alt me-2"></i> Mapa de Ordens
+    </a>
+    {% else %}
+    <a href="{% url 'mapa_ordens_geral' %}" class="d-block py-2 px-3 text-white text-decoration-none">
+      <i class="fa fa-map-marked-alt me-2"></i> Mapa de Ordens
+    </a>
+    {% endif %}
 
     <hr class="bg-light" />
+
     <div class="d-none d-md-block">
       <a href="{% url 'locais' %}" class="d-block py-2 px-3 text-white text-decoration-none">
         <i class="fa fa-box me-2"></i> Locais
@@ -183,6 +195,11 @@
       </a>
     </div>
   </div>
+
+  <!-- Rodapé fixo embaixo -->
+  {% include "includes/sidebar_footer.html" %}
+</div>
+
 
   <div class="main-content order-1 order-md-2">
 
@@ -394,16 +411,7 @@
 
 
 
-    <!-- Rodapé -->
-    <div class="text-center mt-5 mb-3 text-muted small">
-      Logado como: <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
-      <form method="POST" action="{% url 'logout' %}" class="d-inline ms-2">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-link text-danger p-0" title="Sair">
-          <i class="fa fa-sign-out-alt"></i>
-        </button>
-      </form>
-    </div>
+    
 
   </div>
 </div>

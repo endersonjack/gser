@@ -1,0 +1,19 @@
+<hr class="bg-light mt-auto" />
+<div class="px-3 pb-1">
+  <!-- Botão Opções -->
+  <a href="{% url 'configuracoes' %}" class="d-block py-2 px-3 text-white text-decoration-none">
+    <i class="fa fa-cogs me-2"></i> Configurações
+  </a>
+
+ <!-- Rodapé -->
+    <div class="text-center mt-1 mb-1 text-light small">
+      Logado como: <strong>{{ request.user.get_full_name|default:request.user.username }}</strong>
+      <form method="POST" action="{% url 'logout' %}" class="d-inline ms-2">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-link text-danger p-0" title="Sair">
+          <i class="fa fa-sign-out-alt"></i>
+        </button>
+      </form>
+    </div>
+
+</div>
