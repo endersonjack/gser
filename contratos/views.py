@@ -165,7 +165,8 @@ def mapa_ordens_contrato(request, id):
 
 @login_required
 def mapa_ordens_geral(request):
-    ordens = OrdemServico.objects.select_related('local')
+    ordens = OrdemServico.objects.select_related('local', 'contrato')
+    contratos = Contrato.objects.all()
 
     locais_com_coords = []
     for ordem in ordens:
@@ -178,10 +179,11 @@ def mapa_ordens_geral(request):
                 'lat': float(local.latitude),
                 'lng': float(local.longitude),
                 'situacao': ordem.get_situacao_display(),
+                'contrato': ordem.contrato.numero,
                 'url': reverse('ver_ordem_servico', args=[ordem.id])
             })
 
     return render(request, 'contratos/mapa_ordens_geral.html', {
-        'marcadores': json.dumps(locais_com_coords)
+        'marcadores': json.dumps(locais_com_coords),
+        'contratos': contratos,
     })
-

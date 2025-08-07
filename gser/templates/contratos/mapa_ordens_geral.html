@@ -94,16 +94,57 @@
     </a>
     <hr class="bg-light" />
 
-<div class="text-white small px-3">
-  <p class="mb-1 fw-bold">Legenda dos Pins:</p>
-  <div class="d-flex flex-column gap-1">
-    <div><i class="fa fa-map-marker-alt text-primary me-2"></i> Em Andamento</div>
-    <div><i class="fa fa-map-marker-alt text-success me-2"></i> Finalizado</div>
-    <div><i class="fa fa-map-marker-alt text-warning me-2"></i> Pendente/Paralisado</div>
-    <div><i class="fa fa-map-marker-alt text-danger me-2"></i> Cancelado</div>
-    <div><i class="fa fa-map-marker-alt text-secondary me-2"></i> Não Iniciado</div>
-  </div>
+    <!-- filtro por situação e contrato -->
+
+   <div class="text-white small px-3">
+  <form id="filtrosMapa">
+
+   <p class="mb-2 fw-bold">Filtrar por Situação:</p>
+<div class="form-check d-flex align-items-center mb-1">
+  <input class="form-check-input filtro-situacao me-2" type="checkbox" value="Não Iniciado" id="chk-nao-iniciado" checked>
+  <label class="form-check-label text-secondary" for="chk-nao-iniciado">
+    <i class="fa fa-map-marker-alt me-1"></i> Não Iniciado
+  </label>
 </div>
+<div class="form-check d-flex align-items-center mb-1">
+  <input class="form-check-input filtro-situacao me-2" type="checkbox" value="Em Andamento" id="chk-em-andamento" checked>
+  <label class="form-check-label text-primary" for="chk-em-andamento">
+    <i class="fa fa-map-marker-alt me-1"></i> Em Andamento
+  </label>
+</div>
+<div class="form-check d-flex align-items-center mb-1">
+  <input class="form-check-input filtro-situacao me-2" type="checkbox" value="Pendente" id="chk-pendente" >
+  <label class="form-check-label text-warning" for="chk-pendente">
+    <i class="fa fa-map-marker-alt me-1"></i> Pendente / Paralisado
+  </label>
+</div>
+<div class="form-check d-flex align-items-center mb-1">
+  <input class="form-check-input filtro-situacao me-2" type="checkbox" value="Cancelado" id="chk-cancelado" >
+  <label class="form-check-label text-danger" for="chk-cancelado">
+    <i class="fa fa-map-marker-alt me-1"></i> Cancelado
+  </label>
+</div>
+<div class="form-check d-flex align-items-center mb-3">
+  <input class="form-check-input filtro-situacao me-2" type="checkbox" value="Finalizado" id="chk-finalizado" >
+  <label class="form-check-label text-success" for="chk-finalizado">
+    <i class="fa fa-map-marker-alt me-1"></i> Finalizado
+  </label>
+</div>
+
+
+    <p class="mb-2 fw-bold">Filtrar por Contrato:</p>
+    {% for contrato in contratos %}
+      <div class="form-check">
+        <input class="form-check-input filtro-contrato" type="checkbox" value="{{ contrato.numero }}" id="contrato-{{ forloop.counter }}" checked>
+        <label class="form-check-label" for="contrato-{{ forloop.counter }}">{{ contrato.numero }}</label>
+      </div>
+    {% endfor %}
+  </form>
+</div>
+
+
+
+
 
   </div>
 
@@ -135,11 +176,7 @@
 <script>
   window.addEventListener("load", function () {
     const map = L.map('map').setView([-5.8, -35.2], 11);
-
-    // Corrige bug de tiles cortados
-    setTimeout(() => {
-      map.invalidateSize();
-    }, 200);
+    setTimeout(() => map.invalidateSize(), 200);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 18,
@@ -147,50 +184,87 @@
     }).addTo(map);
 
     const marcadores = {{ marcadores|safe }};
-    const markerList = [];
+    const markerGroup = L.featureGroup().addTo(map);
+
+    const cores = {
+      "não iniciado": "gray",
+      "em andamento": "blue",
+      "pendente": "orange",
+      "paralisado": "orange",
+      "cancelado": "red",
+      "finalizado": "green"
+    };
+
+    // Mapear coordenadas já usadas
     const posicoesUsadas = {};
 
-    marcadores.forEach(item => {
-      let lat = parseFloat(item.lat);
-      let lng = parseFloat(item.lng);
-      const chave = `${Math.floor(lat * 10000)},${Math.floor(lng * 10000)}`;
+    function getCheckedValues(classe) {
+      return Array.from(document.querySelectorAll(`.${classe}:checked`)).map(input => input.value.toLowerCase());
+    }
 
-      if (posicoesUsadas[chave]) {
-        const count = posicoesUsadas[chave];
-        lat += 0.00015 * count;
-        lng += 0.00015 * count;
-        posicoesUsadas[chave] += 1;
-      } else {
-        posicoesUsadas[chave] = 1;
-      }
+    function aplicarFiltros() {
+      markerGroup.clearLayers();
 
-      let cor = "blue";
-      const status = item.situacao.toLowerCase();
-      if (status.includes("não iniciado")) cor = "gray";
-      else if (status.includes("andamento")) cor = "blue";
-      else if (status.includes("pendente") || status.includes("paralisado")) cor = "orange";
-      else if (status.includes("cancelado")) cor = "red";
-      else if (status.includes("finalizado")) cor = "green";
+      const situacoes = getCheckedValues("filtro-situacao");
+      const contratos = getCheckedValues("filtro-contrato");
 
-      const icon = L.AwesomeMarkers.icon({
-        icon: 'wrench',
-        markerColor: cor,
-        prefix: 'fa'
+      marcadores.forEach(item => {
+        const situacao = item.situacao.toLowerCase();
+        const contrato = item.contrato.toLowerCase();
+
+        const incluiSituacao = situacoes.some(s => situacao.includes(s));
+        const incluiContrato = contratos.length === 0 || contratos.includes(contrato);
+
+        if (!incluiSituacao || !incluiContrato) return;
+
+        // Detectar coordenadas repetidas e aplicar deslocamento em espiral
+        let lat = parseFloat(item.lat);
+        let lng = parseFloat(item.lng);
+        const chave = `${lat.toFixed(6)},${lng.toFixed(6)}`;
+
+        if (posicoesUsadas[chave]) {
+          const count = posicoesUsadas[chave];
+          const angle = (count * 45) * (Math.PI / 180);
+          const radius = 0.0002 * count;
+
+          lat += radius * Math.sin(angle);
+          lng += radius * Math.cos(angle);
+
+          posicoesUsadas[chave] += 1;
+        } else {
+          posicoesUsadas[chave] = 1;
+        }
+
+        const cor = Object.keys(cores).find(k => situacao.includes(k)) || "blue";
+        const icon = L.AwesomeMarkers.icon({
+          icon: 'wrench',
+          markerColor: cores[cor],
+          prefix: 'fa'
+        });
+
+        const marker = L.marker([lat, lng], { icon });
+        marker.bindPopup(`
+          <strong><a href="${item.url}" class="text-decoration-none">${item.local_nome}</a></strong><br/>
+          <a href="${item.url}" class="text-primary text-decoration-none">O.S. Nº <strong>${item.numero}</strong></a><br/>
+          Situação: ${item.situacao}<br/>
+          Contrato: ${item.contrato}
+        `);
+        markerGroup.addLayer(marker);
       });
 
-      const marker = L.marker([lat, lng], { icon }).addTo(map);
-      marker.bindPopup(`
-        <strong><a href="${item.url}" class="text-decoration-none">${item.local_nome}</a></strong><br/>
-        <a href="${item.url}" class="text-primary text-decoration-none">O.S. Nº <strong>${item.numero}</strong></a><br/>
-        Situação: ${item.situacao}
-      `);
-      markerList.push(marker);
+      if (markerGroup.getLayers().length > 0) {
+        map.fitBounds(markerGroup.getBounds().pad(0.1));
+      }
+    }
+
+    document.querySelectorAll('.filtro-situacao, .filtro-contrato').forEach(input => {
+      input.addEventListener('change', aplicarFiltros);
     });
 
-    if (markerList.length > 0) {
-      const group = L.featureGroup(markerList);
-      map.fitBounds(group.getBounds().pad(0.1));
-    }
+    aplicarFiltros();
   });
 </script>
+
+
+
 {% endblock %}
