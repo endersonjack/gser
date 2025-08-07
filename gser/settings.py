@@ -29,9 +29,13 @@ PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 SECRET_KEY = os.environ["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ["DEBUG"]
+DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split()
+
+
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split()
+CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split()
+
 
 
 # Application definition
@@ -97,7 +101,7 @@ WSGI_APPLICATION = 'gser.wsgi.application'
 
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.environ["default"],
+        default=os.environ["DATABASE_URL"],
         conn_max_age=600,
         conn_health_checks=True,
     )
@@ -134,7 +138,6 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS').split()
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
@@ -157,11 +160,11 @@ STATIC_ROOT = os.path.join(PROJECT_ROOT, 'static')
 MEDIA_URL = '/media/'
 
 
-
 if DEBUG:
-	MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'media')
+    MEDIA_ROOT = os.path.join(PROJECT_ROOT, 'media')
 else:
-	MEDIA_ROOT = '/mnt/data/media/'  # ← isso garante que salve dentro do volume
+    MEDIA_ROOT = '/mnt/data/media/'  # <- esse caminho é onde o Railway monta o Volume
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
