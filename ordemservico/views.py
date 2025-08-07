@@ -13,6 +13,7 @@ from django.http import HttpResponse
 from django.template.loader import render_to_string
 from weasyprint import HTML
 from datetime import date
+from configuracoes.models import Empresa  
 
 
 @login_required
@@ -445,7 +446,24 @@ def sincronizar_situacao_ordem(ordem):
 @login_required
 def imprimir_ordem_servico(request, ordem_id):
     ordem = get_object_or_404(OrdemServico, id=ordem_id)
+    empresa = Empresa.objects.first()  # pega a empresa padrão
+    hoje = date.today()
     return render(request, 'ordemservico/imprimir_ordem_servico.html', {
         'ordem': ordem,
+        'empresa': empresa,
+        'hoje': hoje
+    })
+
+@login_required
+def imprimir_ordem_servico_pdf(request, ordem_id):
+    ordem = get_object_or_404(OrdemServico, id=ordem_id)
+    empresa = Empresa.objects.first()
+    html_string = render_to_string('ordemservico/imprimir_ordem_servico.html', {
+        'ordem': ordem,
+        'empresa': empresa,
         'hoje': date.today()
     })
+    pdf = HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf()
+    resp = HttpResponse(pdf, content_type='application/pdf')
+    resp['Content-Disposition'] = f'inline; filename="os_{ordem.numero_formatado}.pdf"'
+    return resp
