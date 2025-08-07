@@ -88,7 +88,15 @@ class AlbumForm(forms.ModelForm):
         model = Album
         fields = ['nome', 'descricao']
 
+from django.forms.widgets import ClearableFileInput
+
+class MultiFileInput(ClearableFileInput):
+    allow_multiple_selected = True
+
+
 class FotoForm(forms.ModelForm):
     class Meta:
         model = Foto
         fields = ['imagem', 'legenda']
+
+    imagem = forms.ImageField(widget=MultiFileInput(attrs={'multiple': True}))

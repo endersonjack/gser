@@ -3,7 +3,20 @@
 {% load widget_tweaks %}
 
 {% block title %}Gerenciar Álbum{% endblock %}
+{% block extra_head %}
+<style>
+  #dropzone {
+  border: 2px dashed #ccc;
+  padding: 20px;
+  cursor: pointer;
+  background-color: #f8f9fa;
+}
+#dropzone:hover {
+  background-color: #e9ecef;
+}
 
+</style>
+{% endblock %}
 {% block content %}
 <div class="container py-4">
 
@@ -56,25 +69,28 @@
     </div>
   </div>
 
-  <!-- 💻 Desktop: formulário único -->
-  <div class="d-none d-md-block mb-4">
-    <form method="post" enctype="multipart/form-data" class="card card-body shadow-sm">
-      {% csrf_token %}
-      <div class="mb-3">
-        <label class="form-label">Selecionar Imagem</label>
-        {{ form.imagem|add_class:"form-control" }}
-      </div>
-      <div class="mb-3">
-        <label class="form-label">Legenda (opcional)</label>
-        {{ form.legenda|add_class:"form-control" }}
-      </div>
-      <div class="text-end">
-        <button type="submit" class="btn btn-primary">
-          <i class="fa fa-upload"></i> Adicionar Foto
-        </button>
-      </div>
-    </form>
-  </div>
+  <!-- 💻 Desktop: arrastar e soltar múltiplas imagens -->
+<div class="d-none d-md-block mb-4">
+  <form method="post" enctype="multipart/form-data" class="card card-body shadow-sm">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label class="form-label">Selecionar ou Arrastar Imagens</label>
+      <input type="file" name="imagem" accept="image/*" class="form-control" multiple id="dropzone">
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Legenda (opcional - será usada em todas)</label>
+      <input type="text" name="legenda" class="form-control">
+    </div>
+
+    <div class="text-end">
+      <button type="submit" class="btn btn-primary">
+        <i class="fa fa-upload"></i> Enviar Fotos
+      </button>
+    </div>
+  </form>
+</div>
+
 
   <!-- Lista de Fotos -->
   <div class="card shadow-sm">

@@ -291,22 +291,24 @@ def criar_album(request, ordem_id, servico_id):
 @login_required
 def gerenciar_album(request, ordem_id, servico_id, album_id):
     album = get_object_or_404(Album, id=album_id, servico__id=servico_id, servico__ordem_id=ordem_id)
-    if request.method == 'POST':
-        form = FotoForm(request.POST, request.FILES)
-        if form.is_valid():
-            foto = form.save(commit=False)
-            foto.album = album
-            foto.save()
-            messages.success(request, "Foto adicionada com sucesso.")
-            return redirect('gerenciar_album', ordem_id=ordem_id, servico_id=servico_id, album_id=album_id)
-    else:
-        form = FotoForm()
 
+    if request.method == 'POST':
+        arquivos = request.FILES.getlist('imagem')
+        legenda = request.POST.get('legenda', '')
+
+        for arquivo in arquivos:
+            Foto.objects.create(album=album, imagem=arquivo, legenda=legenda)
+
+        messages.success(request, "Foto(s) adicionada(s) com sucesso.")
+        return redirect('gerenciar_album', ordem_id=ordem_id, servico_id=servico_id, album_id=album_id)
+
+    form = FotoForm()
     return render(request, 'ordemservico/gerenciar_album.html', {
         'album': album,
         'form': form,
         'fotos': album.fotos.all()
     })
+
 
 @login_required
 def excluir_foto(request, foto_id):

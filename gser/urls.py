@@ -59,7 +59,8 @@ if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 
-
+# No Railway, mesmo com DEBUG=False, 
+# você precisa que o Whitenoise ou o gunicorn consiga servir os arquivos estáticos e de mídia manualmente.
 urlpatterns += [
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
 ]
