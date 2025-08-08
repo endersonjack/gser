@@ -136,7 +136,7 @@
     <div id="header-ordem" class="card-header d-flex justify-content-between align-items-center">
       <strong>Dados da Ordem de Serviço</strong>
 
-      <!-- Botão Dropdown de Ações -->
+<!-- Botão Dropdown de Ações -->
 <div class="dropdown">
   <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
     <i class="fa fa-cog"></i> Ações
@@ -152,8 +152,14 @@
         <i class="fa fa-print me-2"></i> Imprimir OS
       </a>
     </li>
+    <li>
+      <a class="dropdown-item" href="{% url 'diario_de_obras' ordem.id %}" target="_blank">
+        <i class="fa fa-book me-2"></i> Diário de Obras
+      </a>
+    </li>
   </ul>
 </div>
+
 
             
     </div>

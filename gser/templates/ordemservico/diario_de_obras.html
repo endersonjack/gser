@@ -1,0 +1,732 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Diário de Obras — OS {{ ordem.numero_formatado }}</title>
+  {% if not pdf %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  {% endif %}
+
+<style>
+/* ==================== 1) Página e base ==================== */
+@page { size: A4; margin: 8mm 5mm; }        /* laterais menores */
+html, body { font-size: 13px; line-height: 1; margin: 0; padding: 0; }
+.logo { max-height: 64px; }
+
+/* ==================== 2) Utilitários (sem bordas) ==================== */
+.cx, .cx-cinza, .linha, .quadro-ocorrencias,
+.fotos-wrap img, input, select, textarea {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+}
+
+/* Linhas em 2 colunas com chave-valor inline */
+.row-line{
+  display:flex; flex-wrap:wrap; gap:16px;
+  align-items:baseline; justify-content:space-between;
+  margin-top:6px;
+}
+.row-line .cell{
+  flex:1 1 320px; min-width:280px;
+  display:flex; align-items:baseline; gap:8px;
+}
+.cell .k{ font-weight:700; white-space:nowrap; }
+.cell .v{ flex:1 1 auto; }
+.os-numero .v{ white-space:nowrap; } /* evita quebrar “Nº 0008” */
+
+.cx, .cx-cinza { padding: 0; background: transparent; }
+
+/* ===== Variáveis de tamanho ===== */
+#diario-obras-dados {
+  --foto-h: 95px;   /* altura padrão das fotos (ajustável pelo controle) */
+}
+
+/* Fotos (tela e impressão) controladas pela var */
+.fotos-wrap img,
+#fotos-para-impressao img { 
+  max-height: var(--foto-h); 
+  margin: 3px; 
+}
+
+.assinaturas { display: flex; gap: 24px; margin-top: 28px; }
+.assin { flex: 1; text-align: center; }
+
+.lh-compact p { margin-bottom: .4rem; }
+.small-muted { font-size: 11px; color: #666; }
+.titulo-secao { font-weight: 700; margin: 12px 0 6px; }
+.bullets { margin: 0; padding-left: 18px; }
+.bullets li { margin-bottom: 4px; }
+
+/* ==================== 3) Tipografia — Diário de Obras ==================== */
+#diario-obras-dados { font-size: 15px; } /* base (antes 13px) */
+#diario-obras-dados .do-title { font-size: 1.3em; font-weight: 800; letter-spacing: .02em; }
+#diario-obras-dados label { font-size: 1.05em; font-weight: 700; }
+#diario-obras-dados .do-value,
+#diario-obras-dados .print-only { font-size: 0.9em;  }
+#diario-obras-dados .titulo-secao,
+#diario-obras-dados .lh-compact p,
+#diario-obras-dados .bullets { font-size: 1.1em; }
+
+/* ==================== 4) Tela x Impressão ==================== */
+.print-only { display: none; }
+.screen-only { display: inline; }
+
+@media print {
+  /* Tamanhos maiores no papel */
+  #diario-obras-dados { font-size: 16px !important; }
+  #diario-obras-dados .do-title { font-size: 1.3em !important; }
+  #diario-obras-dados label { font-size: 1.1em !important; }
+  #diario-obras-dados .do-value,
+  #diario-obras-dados .print-only { font-size: 1.3em !important; }
+
+  /* Mostrar apenas spans, esconder inputs */
+  .screen-only { display: none !important; }
+  .print-only  { display: inline !important; }
+
+  /* Ajustes de impressão gerais */
+  .no-print { display: none !important; }
+  a[href]:after { content: ""; }
+  img { page-break-inside: avoid; }
+  .page-break-avoid { page-break-inside: avoid; }
+
+  /* Remove “acolchoado” do Bootstrap na impressão */
+  .container, body.container, .container-fluid {
+    max-width: none !important;
+    width: 100% !important;
+    padding-left: 30 !important;
+    padding-right: 30 !important;
+  }
+  .my-3 { margin-top: 0 !important; margin-bottom: 0 !important; }
+}
+
+/* ===== Compactar linhas no Diário de Obras ===== */
+#diario-obras-dados { line-height: 1.18; } /* era ~1.35 no body */
+#diario-obras-dados .do-title { margin-bottom: 2px; }
+
+#diario-obras-dados .row-line { 
+  gap: 12px;          /* menos espaço entre colunas */
+  margin-top: 2px;    /* menos espaço entre linhas */
+}
+#diario-obras-dados .cell { gap: 6px; }
+
+#diario-obras-dados .k,
+#diario-obras-dados .v,
+#diario-obras-dados label { line-height: 1.1; }
+
+#diario-obras-dados .lh-compact p { 
+  margin-bottom: .25rem; 
+  line-height: 1.15; 
+}
+
+#diario-obras-dados .bullets li { 
+  margin-bottom: 2px; 
+  line-height: 1.2; 
+}
+
+/* Mantém inputs usáveis na tela (mesmo com line-height menor) */
+#diario-obras-dados input.screen-only,
+#diario-obras-dados select.screen-only {
+  height: 30px;
+}
+
+/* Impressão ainda mais justa */
+@media print {
+  #diario-obras-dados { line-height: 1.12 !important; }
+  #diario-obras-dados .row-line { margin-top: 1px; }
+  #diario-obras-dados .bullets li { margin-bottom: 1px; }
+}
+
+/* ===== Destaque visual (somente na tela) para campos editáveis ===== */
+#diario-obras-dados input.screen-only,
+#diario-obras-dados select.screen-only,
+#diario-obras-dados textarea.screen-only {
+  background: #fff9db !important;               /* amarelinho suave */
+  border: 1px dashed #f0ad4e !important;        /* borda pontilhada */
+  box-shadow: 0 0 0 2px #fff3cd !important;     /* “anel” suave */
+  outline: 2px solid transparent !important;    /* preparado pro focus */
+  border-radius: 6px;
+  padding: 4px 8px;
+  transition: box-shadow .15s ease, outline .15s ease, background .15s ease;
+}
+
+/* foco/hover mais evidente */
+#diario-obras-dados input.screen-only:focus,
+#diario-obras-dados select.screen-only:focus,
+#diario-obras-dados textarea.screen-only:focus,
+#diario-obras-dados input.screen-only:hover,
+#diario-obras-dados select.screen-only:hover,
+#diario-obras-dados textarea.screen-only:hover {
+  outline: 2px solid #f0ad4e !important;
+  box-shadow: 0 0 0 3px #ffefb3 !important;
+  background: #fff4bf !important;
+}
+
+/* ===== UI dos álbuns/fotos (tela) ===== */
+.album-list.screen-only { 
+  display:block; 
+  /* sem altura fixa/scroll: expande conforme conteúdo */
+}
+.album-item { border: 1px dashed #e2e2e2; padding: 8px; border-radius: 8px; margin-bottom: 8px; }
+.album-header { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.album-desc { color: #666; font-size: .9em; margin-left: 26px; }
+.album-photos { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.photo-box { display: inline-flex; align-items: center; gap: 6px; border: 1px solid #eee; border-radius: 6px; padding: 4px; }
+.photo-box img { max-height: calc(var(--foto-h) - 20px); display: block; } /* pré-visualização um pouco menor */
+
+/* Badge de orientação — só na tela */
+.editable-note.screen-only {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: .9em;
+  background: #fff3cd;
+  border: 1px solid #ffe69c;
+  color: #664d03;
+  padding: 4px 8px;
+  border-radius: 6px;
+  margin: 4px 0 8px;
+}
+
+/* Garantia: nada disso aparece na impressão */
+@media print {
+  .editable-note { display: none !important; }
+}
+/* ===== Card: Dados do Contrato ===== */
+#dados-contrato {
+  border: 1px solid #888787;
+  border-radius: 5px;
+  padding: 10px 12px;
+  background: #fff;              /* mantém branco na tela/impressão */
+  margin: 10px 0 12px;
+}
+
+/* título mais colado ao topo do card */
+#dados-contrato .titulo-secao { 
+  margin: 0 0 6px; 
+}
+
+/* sombra sutil só na tela */
+@media screen {
+  #dados-contrato {
+    box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.05);
+  }
+}
+
+/* impressão: nada de sombra e evita quebrar o card no meio da página */
+@media print {
+  #dados-contrato {
+    box-shadow: none !important;
+    page-break-inside: avoid;
+  }
+}
+/* ===== ASSINATURAS / AUTORIZAÇÃO ===== */
+#sec-assinaturas { margin-top: 12px; }
+#sec-assinaturas .titulo-secao { text-align: center; text-transform: uppercase; }
+
+.assin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.assin-box { text-align: center; }
+.assin-img { max-height: 70px; display: inline-block; }
+.assin-linha { border-top: 1px solid #333; margin: 6px auto 2px; width: 100%; max-width: 320px; }
+.assin-rotulo { font-size: .95em; font-weight: 600; text-transform: uppercase; }
+
+/* Linha de baixo (engenheiro) centralizada e ocupando a largura toda */
+.assin-grid-bottom { display: grid; grid-template-columns: 1fr; justify-items: center; margin-top: 10px; }
+
+/* Evita quebrar a seção no meio da página impressa */
+@media print {
+  #sec-assinaturas { page-break-inside: avoid; }
+}
+
+
+</style>
+
+</head>
+<body class="container my-3">
+
+  <!-- Barra de ações (não imprime) -->
+  <div class="d-flex justify-content-end gap-2 mb-2 no-print">
+    <a href="{% url 'ver_ordem_servico' ordem.id %}" class="btn btn-outline-secondary">
+      <i class="fa fa-arrow-left"></i> Voltar para a OS
+    </a>
+    <button class="btn btn-success" onclick="window.print()">
+      <i class="fa fa-print"></i> Imprimir
+    </button>
+  </div>
+
+  <!-- Cabeçalho institucional -->
+  <div class="text-center page-break-avoid" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;">
+    {% if orgao and orgao.logo %}
+      <img src="{{ orgao.logo.url }}" alt="Logo" class="logo mb-2">
+    {% else %}
+      <span class="small-muted">[Sem logo]</span>
+    {% endif %}
+
+    <h5 class="mb-0 text-uppercase">{{ orgao.prefeitura|default:"" }}</h5>
+    <h5 class="mb-0 text-uppercase">{{ orgao.nome|default:"" }}</h5>
+    <h6 class="mb-0">{{ orgao.departamento|default:"" }}</h6>
+    {% if orgao and orgao.endereco %}
+      <p class="mb-0 small">{{ orgao.endereco }}</p>
+    {% endif %}
+  </div>
+
+  <hr class="my-2"/>
+
+  <p class="editable-note screen-only">
+    <i class="fa fa-highlighter"></i>
+    Campos em amarelo são editáveis e não saem na impressão.
+  </p>
+
+   
+
+  <!-- ===================== DADOS DO DIÁRIO DE OBRAS ===================== -->
+  <section id="diario-obras-dados" class="page-break-avoid">
+
+    <!-- Título (sem borda) -->
+    <div class="cx-cinza text-center do-title" style="text-transform: uppercase; background: transparent; font-weight: 700;">
+      DIÁRIO DE OBRAS
+    </div>
+    
+
+    <!-- ===================== DADOS DO CONTRATO ===================== -->
+     <div id="dados-contrato">
+  <div class="page-break-avoid">
+    <div class="titulo-secao" style="font-weight:700;">DADOS DO CONTRATO</div>
+
+    <div class="row-line">
+      <div class="cell">
+        <span class="k">CONTRATO Nº.:</span>
+        <span class="v do-value">{{ ordem.contrato.numero }}</span>
+      </div>
+      <div class="cell">
+        <span class="k">EMPRESA:</span>
+        <span class="v do-value">{{ ordem.contrato.empresa_contratada }}</span>
+      </div>
+    </div>
+
+    <div class="row-line">
+      <div class="cell" style="flex:1 1 100%;">
+        <span class="k">OBJETO:</span>
+        <span class="v do-value">{{ ordem.contrato.objeto }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+      <!-- ===================== FIM DADOS DO CONTRATO ===================== -->
+
+
+    <!-- Card sem borda -->
+    <div class="cx" style="padding: 0;">
+
+      <!-- Linha 1: Nº OS  |  Funcionários -->
+      <div class="row-line">
+        <div class="cell os-numero">
+          <span class="k">ORDEM DE SERVIÇO Nº</span>
+          <span class="v do-value">{{ ordem.numero_formatado }}</span>
+        </div>
+
+        <div class="cell">
+          <span class="k">FUNCIONÁRIOS</span>
+          <span class="v">
+            <input id="funcionarios" class="screen-only" type="text" placeholder="Digite os nomes" value="1 Pedreiro - 1 Servente">
+            <span id="print-funcionarios" class="print-only"></span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Linha 2: Data Início  |  Tempo -->
+      <div class="row-line">
+        <div class="cell">
+          <span class="k">DATA INÍCIO</span>
+          <span class="v">
+            <input id="data_inicio" class="screen-only" type="date" value="{{ ordem.data_inicio|date:'Y-m-d' }}">
+            <span id="print-data-inicio" class="print-only">
+              {% if ordem.data_inicio %}{{ ordem.data_inicio|date:"d/m/Y" }}{% endif %}
+            </span>
+          </span>
+        </div>
+
+        <div class="cell">
+          <span class="k">TEMPO</span>
+          <span class="v">
+            <select id="tempo" class="screen-only">
+              <option value="">Selecione</option>
+              <option selected>Ensolarado</option>
+              <option>Nublado</option>
+              <option>Chuva</option>
+            </select>
+            <span id="print-tempo" class="print-only"></span>
+          </span>
+        </div>
+      </div>
+
+    <!-- Linha 3: Data Término -->
+      <div class="row-line">
+        <div class="cell">
+          <span class="k">DATA TÉRMINO</span>
+          <span class="v">
+            <input id="data_termino" class="screen-only" type="date" value="{{ ordem.data_termino|date:'Y-m-d' }}">
+            <span id="print-data-termino" class="print-only">
+              {% if ordem.data_termino %}{{ ordem.data_termino|date:"d/m/Y" }}{% endif %}
+            </span>
+          </span>
+        </div>
+      </div>
+
+      
+
+      <!-- Espaço -->
+      <div style="height:8px;"></div>
+
+      <!-- Unidade / Endereço -->
+      <div class="lh-compact">
+        <p><strong>UNIDADE:</strong> {{ ordem.local.nome|default:"-" }}</p>
+        <p><strong>ENDEREÇO:</strong> {{ ordem.local.endereco|default:"-" }}</p>
+      </div>
+
+      <!-- Espaço -->
+      <div style="height:8px;"></div>
+
+      <!-- Linha 4: Serviço (select grande controla descrição impressa + fotos) -->
+      <div class="row-line">
+        <div class="cell" style="flex:1 1 100%;">
+          <span class="k">SERVIÇO</span>
+          <span class="v">
+            {% if ordem.servicos.exists %}
+              <select id="select-servico" class="screen-only form-select" style="min-height: 38px; font-size: 1rem;">
+                {% for s in ordem.servicos.all %}
+                  <option value="{{ s.id }}" {% if forloop.first %}selected{% endif %}>
+                    {{ s.descricao|truncatechars:160 }}{% if s.categoria %} — ({{ s.categoria.nome }}){% endif %}
+                  </option>
+                {% endfor %}
+              </select>
+              <span id="print-servico" class="print-only"></span>
+            {% else %}
+              <span class="small-muted">Nenhum serviço cadastrado nesta O.S.</span>
+            {% endif %}
+          </span>
+        </div>
+      </div>
+
+      <!-- Controles de tamanho (somente tela) -->
+      <div class="row-line screen-only">
+        <div class="cell" style="flex:1 1 100%;">
+          <span class="k"><i class="fa fa-image me-1"></i> TAMANHO DAS FOTOS</span>
+          <span class="v d-flex align-items-center gap-2 flex-wrap">
+            <input type="range" id="range-foto" class="form-range screen-only" min="70" max="300" step="5" value="95" style="max-width:360px;">
+            <span class="small-muted" id="range-foto-label">95 px</span>
+            <button type="button" id="btn-reset-tamanhos" class="btn btn-sm btn-outline-secondary ms-2">Resetar</button>
+          </span>
+        </div>
+      </div>
+
+      <!-- FOTOS: UI com álbuns e fotos (tela) + saída selecionada (impressão) -->
+      <div class="page-break-avoid">
+        <div class="titulo-secao" style="font-weight:700;">FOTOS</div>
+
+        <!-- Tela: lista de álbuns/fotos com checkboxes -->
+        <div id="albuns-servico" class="album-list screen-only"></div>
+        <p id="sem-albuns" class="screen-only small-muted mb-0" style="display:none;">Sem álbuns para este serviço.</p>
+
+        <!-- Impressão: somente as fotos selecionadas -->
+        <div id="fotos-para-impressao" class="print-only" style="display:flex; flex-wrap:wrap;"></div>
+      </div>
+
+    </div>
+  </section>
+  <!-- =================== /DADOS DO DIÁRIO DE OBRAS =================== -->
+
+
+<!-- ===================== ASSINATURAS ===================== -->
+
+<div id="sec-assinaturas" class="page-break-avoid " style="padding-top: 20px;">
+  <div class="titulo-secao" style="font-weight:700;">AUTORIZAÇÃO:</div>
+
+  <!-- Linha de cima: Gestor | Fiscal -->
+  <div class="assin-grid">
+    <!-- Gestor -->
+    <div class="assin-box">
+      {% if orgao and orgao.assinatura_gestor %}
+        <img src="{{ orgao.assinatura_gestor.url }}" alt="Assinatura do Gestor" class="assin-img">
+      {% else %}
+        <div class="small-muted">[Sem assinatura do Gestor]</div>
+      {% endif %}
+      <div class="assin-linha"></div>
+      <div class="assin-rotulo">Assinatura do Gestor</div>
+    </div>
+
+    <!-- Fiscal -->
+    <div class="assin-box">
+      {% if orgao and orgao.assinatura_fiscal %}
+        <img src="{{ orgao.assinatura_fiscal.url }}" alt="Assinatura do Fiscal" class="assin-img">
+      {% else %}
+        <div class="small-muted">[Sem assinatura do Fiscal]</div>
+      {% endif %}
+      <div class="assin-linha"></div>
+      <div class="assin-rotulo">Assinatura do Fiscal</div>
+    </div>
+  </div>
+
+  <!-- Linha de baixo: Engenheiro (centralizado) -->
+  <div class="assin-grid-bottom">
+    <div class="assin-box" style="max-width:420px; width:100%;">
+      {% if orgao and orgao.assinatura_engenheiro %}
+        <img src="{{ orgao.assinatura_engenheiro.url }}" alt="Assinatura do Engenheiro" class="assin-img">
+      {% else %}
+        <div class="small-muted">[Sem assinatura do Engenheiro]</div>
+      {% endif %}
+      <div class="assin-linha"></div>
+      <div class="assin-rotulo">Ciente Empresa</div>
+    </div>
+  </div>
+</div>
+<!-- ===================== FIM ASSINATURAS ===================== -->
+
+
+
+
+
+
+
+<script>
+(function() {
+  // ---- Mapa de serviços -> descrição e álbuns/fotos (gerado pelo Django) ----
+  const SERVICOS_DATA = {
+    {% for s in ordem.servicos.all %}
+      "{{ s.id }}": {
+        texto: "{{ s.descricao|escapejs }}{% if s.categoria %} ({{ s.categoria.nome|escapejs }}){% endif %}",
+        albuns: [
+          {% for album in s.albuns.all %}
+            {
+              id: "{{ album.id }}",
+              nome: "{{ album.nome|escapejs }}",
+              descricao: "{{ album.descricao|default_if_none:''|escapejs }}",
+              fotos: [
+                {% for foto in album.fotos.all %}
+                  { id: "{{ foto.id }}", url: "{{ foto.imagem.url }}" }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+              ]
+            }{% if not forloop.last %},{% endif %}
+          {% endfor %}
+        ]
+      }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  };
+
+  function fmtDate(v) {
+    if (!v) return "";
+    const [y,m,d] = v.split("-");
+    if (!y || !m || !d) return v;
+    return `${d}/${m}/${y}`;
+  }
+
+  /* ---------- Render de Álbuns/Fotos (tela) ---------- */
+  function renderAlbuns(servicoId) {
+    const container = document.getElementById("albuns-servico");
+    const semAlbuns = document.getElementById("sem-albuns");
+    container.innerHTML = "";
+    semAlbuns.style.display = "none";
+
+    const data = SERVICOS_DATA[servicoId];
+    const albuns = (data && data.albuns) ? data.albuns : [];
+
+    if (!albuns.length) {
+      semAlbuns.style.display = "block";
+      updatePrintFotos(); // limpa impressão
+      return;
+    }
+
+    albuns.forEach(alb => {
+      const wrap = document.createElement("div");
+      wrap.className = "album-item";
+
+      // Cabeçalho do álbum (checkbox do álbum)
+      const header = document.createElement("div");
+      header.className = "album-header";
+
+      const cbAlbum = document.createElement("input");
+      cbAlbum.type = "checkbox";
+      cbAlbum.className = "album-checkbox screen-only";
+      cbAlbum.dataset.albumId = alb.id;
+
+      const labelAlbum = document.createElement("label");
+      labelAlbum.textContent = alb.nome;
+
+      header.appendChild(cbAlbum);
+      header.appendChild(labelAlbum);
+      wrap.appendChild(header);
+
+      if (alb.descricao) {
+        const desc = document.createElement("div");
+        desc.className = "album-desc";
+        desc.textContent = alb.descricao;
+        wrap.appendChild(desc);
+      }
+
+      // Fotos do álbum
+      const grid = document.createElement("div");
+      grid.className = "album-photos";
+      alb.fotos.forEach(f => {
+        const box = document.createElement("label");
+        box.className = "photo-box";
+
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.className = "photo-checkbox screen-only";
+        cb.dataset.albumId = alb.id;
+        cb.dataset.photoId = f.id;
+
+        const img = new Image();
+        img.src = f.url;
+        img.alt = "Foto";
+        img.loading = "lazy";
+
+        box.appendChild(cb);
+        box.appendChild(img);
+        grid.appendChild(box);
+      });
+      wrap.appendChild(grid);
+
+      container.appendChild(wrap);
+    });
+
+    // Padrão: marcar todos os álbuns e fotos (facilita)
+    container.querySelectorAll('.album-checkbox').forEach(cb => { cb.checked = true; });
+    container.querySelectorAll('.photo-checkbox').forEach(cb => { cb.checked = true; });
+
+    // Ajusta estado de impressão
+    updatePrintFotos();
+  }
+
+  /* ---------- Atualiza container de impressão com as fotos selecionadas ---------- */
+  function updatePrintFotos() {
+    const out = document.getElementById("fotos-para-impressao");
+    if (!out) return;
+    out.innerHTML = "";
+
+    const checked = Array.from(document.querySelectorAll('#albuns-servico .photo-checkbox:checked'));
+    if (!checked.length) return;
+
+    checked.forEach(cb => {
+      const img = cb.parentElement.querySelector('img');
+      if (!img) return;
+      const clone = new Image();
+      clone.src = img.src;
+      clone.alt = img.alt || "Foto do serviço";
+      // sem inline maxHeight — usa CSS var (--foto-h)
+      out.appendChild(clone);
+    });
+  }
+
+  /* ---------- Seleção album ↔ fotos ---------- */
+  function albunsDelegation(e) {
+    const t = e.target;
+    if (t.classList.contains('album-checkbox')) {
+      // Marca/Desmarca todas as fotos do álbum
+      const albumId = t.dataset.albumId;
+      document.querySelectorAll(`.photo-checkbox[data-album-id="${albumId}"]`).forEach(cb => {
+        cb.checked = t.checked;
+      });
+      updatePrintFotos();
+    } else if (t.classList.contains('photo-checkbox')) {
+      const albumId = t.dataset.albumId;
+      const fotos = Array.from(document.querySelectorAll(`.photo-checkbox[data-album-id="${albumId}"]`));
+      const allChecked = fotos.every(cb => cb.checked);
+      const cbAlbum = document.querySelector(`.album-checkbox[data-album-id="${albumId}"]`);
+      if (cbAlbum) cbAlbum.checked = allChecked;
+      updatePrintFotos();
+    }
+  }
+
+  /* ---------- Serviço selecionado: texto + álbuns ---------- */
+  function updateServico() {
+    const sel = document.getElementById("select-servico");
+    const spanPrint = document.getElementById("print-servico");
+    if (!sel) return;
+
+    const id = sel.value;
+    const data = SERVICOS_DATA[id];
+
+    if (spanPrint) spanPrint.textContent = data ? data.texto : "";
+
+    renderAlbuns(id);
+  }
+
+  /* ---------- Sincroniza campos de tela -> spans de impressão ---------- */
+  function fmtDate(v) {
+    if (!v) return "";
+    const [y,m,d] = v.split("-");
+    if (!y || !m || !d) return v;
+    return `${d}/${m}/${y}`;
+  }
+  function syncCampos() {
+    const funcionarios = document.getElementById("funcionarios");
+    const di = document.getElementById("data_inicio");
+    const dt = document.getElementById("data_termino");
+    const tempo = document.getElementById("tempo");
+    const sel = document.getElementById("select-servico");
+
+    if (funcionarios) document.getElementById("print-funcionarios").textContent = funcionarios.value || "";
+    if (di) document.getElementById("print-data-inicio").textContent = fmtDate(di.value) || document.getElementById("print-data-inicio").textContent;
+    if (dt) document.getElementById("print-data-termino").textContent = fmtDate(dt.value) || document.getElementById("print-data-termino").textContent;
+    if (tempo) document.getElementById("print-tempo").textContent = tempo.value || document.getElementById("print-tempo").textContent;
+
+    if (sel) {
+      const data = SERVICOS_DATA[sel.value];
+      const spanPrint = document.getElementById("print-servico");
+      if (spanPrint) spanPrint.textContent = data ? data.texto : "";
+    }
+  }
+
+  /* ---------- Controle de tamanho das fotos (CSS var + persistência) ---------- */
+  function applyFotoSize(px) {
+    const root = document.getElementById('diario-obras-dados');
+    if (root) root.style.setProperty('--foto-h', px + 'px');
+    localStorage.setItem('do_foto_h', px);
+    const lbl = document.getElementById('range-foto-label');
+    if (lbl) lbl.textContent = px + ' px';
+  }
+
+  function initSizeControls() {
+    const rangeFoto = document.getElementById('range-foto');
+    const btnReset = document.getElementById('btn-reset-tamanhos');
+
+    const savedFoto = parseInt(localStorage.getItem('do_foto_h') || '95', 10);
+
+    if (rangeFoto) {
+      rangeFoto.value = savedFoto;
+      applyFotoSize(savedFoto);
+      rangeFoto.addEventListener('input', () => applyFotoSize(parseInt(rangeFoto.value,10)));
+    }
+    if (btnReset) {
+      btnReset.addEventListener('click', () => {
+        if (rangeFoto) { rangeFoto.value = 95; applyFotoSize(95); }
+      });
+    }
+  }
+
+  // Eventos
+  document.addEventListener("input", syncCampos, true);
+  document.addEventListener("change", syncCampos, true);
+  window.addEventListener("beforeprint", () => { syncCampos(); updatePrintFotos(); });
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const sel = document.getElementById("select-servico");
+    if (sel && sel.options.length) {
+      updateServico();
+    }
+    initSizeControls();
+    syncCampos();
+
+    if (sel) sel.addEventListener("change", updateServico);
+    const albuns = document.getElementById("albuns-servico");
+    if (albuns) albuns.addEventListener("change", albunsDelegation);
+  });
+})();
+</script>
+
+</body>
+</html>

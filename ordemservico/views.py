@@ -13,7 +13,11 @@ from django.http import HttpResponse
 from django.template.loader import render_to_string
 from weasyprint import HTML
 from datetime import date
-from configuracoes.models import Empresa  
+from configuracoes.models import Empresa
+from diariodeobras.models import Orgao
+
+
+
 
 
 @login_required
@@ -519,3 +523,15 @@ def imprimir_servico_pdf(request, ordem_id, servico_id):
     resp = HttpResponse(pdf, content_type='application/pdf')
     resp['Content-Disposition'] = f'inline; filename="os_{ordem.numero_formatado}_servico_{servico.id}.pdf"'
     return resp
+
+
+@login_required
+def diario_de_obras(request, ordem_id):
+    ordem = get_object_or_404(OrdemServico, id=ordem_id)
+    empresa = Empresa.objects.first()
+    orgao = Orgao.objects.first()
+    return render(request, 'ordemservico/diario_de_obras.html', {
+        'ordem': ordem,
+        'empresa': empresa,
+        'orgao': orgao,
+    })
