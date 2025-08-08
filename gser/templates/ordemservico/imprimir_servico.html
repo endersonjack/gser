@@ -1,0 +1,280 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Imprimir O.S. nº {{ordem.numero}} por Serviço</title>
+  {% if not pdf %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  {% endif %}
+
+  <style>
+
+    /* Mostrar só na web / só na impressão */
+  .somente-web { display: block; }
+  .somente-print { display: none; }
+
+  /* Grid de fotos na impressão e permitir quebra entre imagens */
+  #secao-albuns .imagens-album { 
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 6px;
+    page-break-inside: auto !important; 
+    break-inside: auto !important;
+  }
+  #secao-albuns .imagens-album img {
+    page-break-inside: auto !important; 
+    break-inside: auto !important;
+  }
+  .foto-print { max-height: 120px; margin: 4px; border: 1px solid #ddd; }
+
+  @media print {
+    .somente-web { display: none !important; }
+    .somente-print { display: block !important; }
+  }
+    @page { size: A4; margin: 5mm; }
+    body { font-size: 13px; line-height: 1.3; }
+
+    @media print {
+      .no-print, .no-print * { display: none !important; visibility: hidden !important; }
+      body { margin: 0; padding: 0; }
+      .container { max-width: 100%; padding: 20px; }
+      .card-impressao, .titulo-secao, .quadro-ocorrencias, .assinaturas, .linha-assinatura { page-break-inside: avoid; }
+      table, img, p, div { page-break-inside: avoid !important; }
+    }
+
+    .quadro-ocorrencias { border: 1px dashed #000; height: 160px; padding: 8px; margin-bottom: 15px; }
+    .assinaturas { display: flex; justify-content: space-between; margin-top: 40px; }
+    .assinatura-bloco { width: 45%; text-align: center; }
+    .linha-assinatura { border-top: 1px solid #000; margin-top: 50px; }
+    .logo { max-height: 70px; }
+    .card-impressao { border: 1px solid #000; padding: 15px; }
+    .form-check { margin-bottom: 6px; }
+    .foto-preview { max-height: 90px; margin: 4px; border: 1px solid #ddd; }
+    .titulo-secao { background: #f0f0f0; padding: 4px 8px; font-weight: bold; border: 1px solid #ccc; margin-top: 15px; }
+
+    /* Destaques com borda (Serviço/Categoria) */
+    .bloco-destaque {
+      /* border: 1px solid #000; */
+      padding: 8px 12px;
+      font-weight: 700;
+      letter-spacing: .3px;
+      margin-top: 6px;
+      margin-bottom: 8px;
+      background: #f8f9fa;
+      border-radius: 4px;
+    }
+
+    /* Destaque sem borda (Nº OS/Local) */
+    .bloco-destaque-soft {
+      padding: 8px 12px;
+      font-weight: 700;
+      letter-spacing: .3px;
+      margin-top: 6px;
+      margin-bottom: 8px;
+      background: #f8f9fa;   /* sem borda */
+      border-radius: 4px;
+    }
+
+    /* Linhas de destaques lado a lado */
+    .linha-destaque {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.flex-descricao {
+  flex: 1; /* cresce e ocupa o espaço restante */
+}
+.flex-categoria {
+  flex: 0 auto; /* ocupa apenas o tamanho do conteúdo */
+  white-space: nowrap; /* evita quebrar em várias linhas */
+}
+
+    /* Aumentos de fonte solicitados */
+    .fs-os { font-size: 1.1rem; }        
+   
+  </style>
+</head>
+<body class="container my-3">
+
+  <!-- Barra de ações (não imprime) -->
+  <div class="d-flex justify-content-end gap-2 mb-2 no-print">
+    <a href="{% url 'ver_ordem_servico' ordem.id %}" class="btn btn-outline-secondary">
+      <i class="fa fa-arrow-left"></i> Voltar para a OS
+    </a>
+    <button class="btn btn-primary" type="button" onclick="imprimirSelecionados()">
+      <i class="fa fa-print"></i> Imprimir Selecionados
+    </button>
+    <button class="btn btn-outline-secondary" type="button" onclick="limparSelecao()">
+      Limpar seleção
+    </button>
+    <button class="btn btn-success" type="button" onclick="window.print()">
+      <i class="fa fa-print"></i> Imprimir Tudo
+    </button>
+  </div>
+
+  <!-- Cabeçalho -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex align-items-center gap-3">
+      {% if empresa and empresa.logo %}
+        <img src="{{ empresa.logo.url }}" alt="Logo" class="logo">
+      {% else %}
+        <span class="text-muted small">[Sem logo]</span>
+      {% endif %}
+      <div>
+        <h5 class="mb-0">Ordem de Serviço</h5>
+        <small><strong>Empresa:</strong> {{ empresa.nome|default:"-" }}</small><br>
+        {% if empresa.endereco %}<small><strong>Endereço:</strong> {{ empresa.endereco }}</small><br>{% endif %}
+        {% if empresa.telefone %}<small><strong>Telefone:</strong> {{ empresa.telefone }}</small><br>{% endif %}
+      </div>
+    </div>
+    <div class="text-end">
+      <small><strong>Órgão:</strong> {{ ordem.contrato.orgao_contratante }}</small><br>
+      <small><strong>Contrato:</strong> {{ ordem.contrato.numero }}</small>
+    </div>
+  </div>
+
+  <!-- Dados da OS -->
+  <div class="card-impressao mb-2">
+    <!-- Nº da OS e Local destacados, sem borda -->
+    <div class="linha-destaque">
+      <div class="bloco-destaque-soft fs-os flex-descricao">
+        Nº OS: {{ ordem.numero_formatado }}
+      </div>
+      <div class="bloco-destaque-soft fs-os flex-categoria">
+        Local: {{ ordem.local.nome }}
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-12 "><strong>Endereço:</strong> {{ ordem.local.endereco }}</div>
+      <div class="col-md-6"><strong>Data de Início:</strong> {{ ordem.data_inicio|date:"d/m/Y" }}</div>
+      {% if ordem.data_termino %}
+        <div class="col-md-6"><strong>Data de Término:</strong> {{ ordem.data_termino|date:"d/m/Y" }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Serviço e Categoria lado a lado -->
+  <div class="card-impressao mb-2">
+    <div class="linha-destaque">
+  <div class="bloco-destaque fs-os flex-descricao">
+    Serviço: {{ servico.descricao }}
+  </div>
+  <div class="bloco-destaque fs-os flex-categoria">
+    Categoria: {{ servico.categoria.nome|default:"-" }}
+  </div>
+</div>
+
+
+    {% if servico.quantidade %}
+      <div><strong>Quantidade:</strong> {{ servico.quantidade }}</div>
+    {% endif %}
+    {% if servico.observacao %}
+      <div><strong>Observação:</strong> {{ servico.observacao }}</div>
+    {% endif %}
+    {% if ordem.data_termino %}
+      <div><strong>Término:</strong> {{ ordem.data_termino|date:"d/m/Y" }}</div>
+    {% endif %}
+  </div>
+
+  <!-- Álbuns do Serviço -->
+  <div id="secao-albuns">
+    <div class="titulo-secao" id="titulo-albuns">Fotos</div>
+    {% for album in servico.albuns.all %}
+  {% with total=album.fotos.count %}
+    {% if total %}
+      <div class="form-check album-item" data-album-id="{{ album.id }}">
+        <input class="form-check-input album-checkbox" type="checkbox" id="album{{ album.id }}" data-album-id="{{ album.id }}">
+        <label class="form-check-label" for="album{{ album.id }}">
+          {{ album.nome }}{% if album.descricao %} — <span class="text-muted">{{ album.descricao }}</span>{% endif %}
+          <small class="text-muted">({{ total }} foto{% if total > 1 %}s{% endif %})</small>
+        </label>
+
+        {# Print: TODAS as fotos #}
+        <div class="imagens-album somente-print">
+          {% for foto in album.fotos.all %}
+            <img src="{{ foto.imagem.url }}" alt="Foto" class="foto-print">
+          {% endfor %}
+        </div>
+      </div>
+    {% else %}
+      <div class="album-item sem-fotos" data-album-id="{{ album.id }}">
+        <label class="form-check-label">
+          {{ album.nome }}{% if album.descricao %} — <span class="text-muted">{{ album.descricao }}</span>{% endif %}
+          <span class="text-muted">(sem fotos)</span>
+        </label>
+      </div>
+    {% endif %}
+  {% endwith %}
+{% endfor %}
+
+  </div>
+
+  <!-- Ocorrências -->
+  <div class="titulo-secao">Ocorrências</div>
+  <div class="quadro-ocorrencias"></div>
+
+  <!-- Assinaturas -->
+  <div class="text-center assinaturas">
+    <div class="assinatura-bloco">
+      <div class="linha-assinatura"></div>
+      <small>Assinatura da {{ empresa.nome|default:"-" }}</small>
+    </div>
+    <div class="assinatura-bloco">
+      <div class="linha-assinatura"></div>
+      <small>Assinatura do Funcionário</small>
+    </div>
+  </div>
+
+  <!-- Direção centralizada -->
+  <div class="assinaturas mt-4" style="justify-content: center;">
+    <div class="assinatura-bloco" style="width: 45%; text-align: center;">
+      <p class="mb-0">Serviço finalizado em: _____ / _____ / _____</p>
+      <div class="linha-assinatura"></div>
+      <small>Assinatura da Direção / Responsável</small>
+    </div>
+  </div>
+
+  <script>
+    function imprimirSelecionados() {
+      const checks = Array.from(document.querySelectorAll('.album-checkbox'));
+      const selecionados = checks.filter(c => c.checked).map(c => c.dataset.albumId);
+      const secaoAlbuns = document.getElementById('secao-albuns');
+      const tituloAlbuns = document.getElementById('titulo-albuns');
+      const itens = document.querySelectorAll('.album-item');
+
+      if (selecionados.length === 0) {
+        secaoAlbuns.classList.add('no-print');
+        window.print();
+        secaoAlbuns.classList.remove('no-print');
+        return;
+      }
+
+      tituloAlbuns.style.display = 'block';
+      itens.forEach(div => {
+        const id = div.dataset.albumId;
+        if (!selecionados.includes(id)) {
+          div.classList.add('no-print');
+        }
+      });
+
+      window.print();
+
+      setTimeout(() => {
+        itens.forEach(div => div.classList.remove('no-print'));
+        tituloAlbuns.style.display = '';
+      }, 300);
+    }
+
+    function limparSelecao() {
+      document.querySelectorAll('.album-checkbox').forEach(c => c.checked = false);
+      document.getElementById('secao-albuns')?.classList.remove('no-print');
+      document.querySelectorAll('.album-item.no-print').forEach(el => el.classList.remove('no-print'));
+    }
+  </script>
+
+</body>
+</html>

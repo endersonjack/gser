@@ -52,6 +52,16 @@ urlpatterns = [
     path('api/mapa-ordens-geral/', api_mapa_ordens_geral, name='api_mapa_ordens_geral'),
     path('ordem/<int:ordem_id>/imprimir/', imprimir_ordem_servico, name='imprimir_ordem_servico'),
     path('ordem/<int:ordem_id>/imprimir/pdf/', imprimir_ordem_servico_pdf, name='imprimir_ordem_servico_pdf'),
+    path(
+    'ordem/<int:ordem_id>/imprimir/filtrar/',
+    imprimir_ordem_servico_filtrado,
+    name='imprimir_ordem_servico_filtrado'
+    ),
+
+    path('ordem/<int:ordem_id>/servico/<int:servico_id>/imprimir/', imprimir_servico, name='imprimir_servico'),
+    path('ordem/<int:ordem_id>/servico/<int:servico_id>/imprimir/pdf/', imprimir_servico_pdf, name='imprimir_servico_pdf'),
+
+
 
 
     

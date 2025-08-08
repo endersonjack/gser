@@ -3,92 +3,54 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Imprimir Ordem de Serviço</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-  
+  <title>Imprimir Ordem de Serviço nº {{ordem.numero}} - Completa</title>
+  {% if not pdf %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  {% endif %}
+
   <style>
-    /* Margens menores e otimização para impressão */
-    @page {
-    size: A4;
-    margin: 5mm; /* margem mínima */
-  }
-  body {
-    font-size: 13px;
-    line-height: 1.3;
-  }
-  @media print {
-    .no-print, .no-print * {
-      display: none !important;
-      visibility: hidden !important;
-    }
-    body {
-      margin: 0;
-      padding: 0;
-    }
-    .container {
-      max-width: 100%;
-      padding: 20px;
-    }
-    .card-impressao, .titulo-secao, .quadro-ocorrencias, .assinaturas, .linha-assinatura {
-      page-break-inside: avoid;
+    @page { size: A4; margin: 5mm; }
+    body { font-size: 13px; line-height: 1.3; }
+
+    
+
+    @media print {
+      .no-print, .no-print * { display: none !important; visibility: hidden !important; }
+      body { margin: 0; padding: 0; }
+      .container { max-width: 100%; padding: 20px; }
+      .card-impressao, .titulo-secao, .quadro-ocorrencias, .assinaturas, .linha-assinatura { page-break-inside: avoid; }
+      table, img, p, div { page-break-inside: avoid !important; }
     }
 
-
-      table, img, p, div {
-        page-break-inside: avoid !important;
-      }
-    }
-
-    .quadro-ocorrencias {
-      border: 1px dashed #000;
-      height: 160px;
-      padding: 8px;
-      margin-bottom: 15px;
-    }
-    .assinaturas {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 40px;
-    }
-    .assinatura-bloco {
-      width: 45%;
-      text-align: center;
-    }
-    .linha-assinatura {
-      border-top: 1px solid #000;
-      margin-top: 50px;
-    }
+    .quadro-ocorrencias { border: 1px dashed #000; height: 160px; padding: 8px; margin-bottom: 15px; }
+    .assinaturas { display: flex; justify-content: space-between; margin-top: 40px; }
+    .assinatura-bloco { width: 45%; text-align: center; }
+    .linha-assinatura { border-top: 1px solid #000; margin-top: 50px; }
     .logo { max-height: 70px; }
     .card-impressao { border: 1px solid #000; padding: 15px; }
     .form-check { margin-bottom: 6px; }
-    .foto-preview {
-      max-height: 90px;
-      margin: 4px;
-      border: 1px solid #ddd;
-    }
-    .titulo-secao {
-      background: #f0f0f0;
-      padding: 4px 8px;
-      font-weight: bold;
-      border: 1px solid #ccc;
-      margin-top: 15px;
-    }
+    .foto-preview { max-height: 90px; margin: 4px; border: 1px solid #ddd; }
+    .titulo-secao { background: #f0f0f0; padding: 4px 8px; font-weight: bold; border: 1px solid #ccc; margin-top: 15px; }
   </style>
 </head>
 <body class="container my-3">
 
-  <!-- Botões topo -->
+  <!-- Barra de ações (não imprime) -->
   <div class="d-flex justify-content-end gap-2 mb-2 no-print">
     <a href="{% url 'ver_ordem_servico' ordem.id %}" class="btn btn-outline-secondary">
       <i class="fa fa-arrow-left"></i> Voltar para a OS
     </a>
-    <button class="btn btn-primary" onclick="window.print()">
-      <i class="fa fa-print"></i> Imprimir
-    </button>
+
+   
     <a href="{% url 'imprimir_ordem_servico_pdf' ordem.id %}" class="btn btn-danger" target="_blank" rel="noopener">
       <i class="fa fa-file-pdf"></i> Gerar PDF
     </a>
+
+    <!-- Impressão direta da página atual (todos) -->
+    <button class="btn btn-success" type="button" onclick="window.print()">
+      <i class="fa fa-print"></i> Imprimir
+    </button>
   </div>
 
   <!-- Cabeçalho -->
@@ -100,7 +62,7 @@
         <span class="text-muted small">[Sem logo]</span>
       {% endif %}
       <div>
-        <h5 class="mb-0">Ordem de Serviço</h5>
+        <h5 class="mb-0">Ordem de Serviço Completa</h5>
         <small><strong>Empresa:</strong> {{ empresa.nome|default:"-" }}</small><br>
         {% if empresa.endereco %}<small><strong>Endereço:</strong> {{ empresa.endereco }}</small><br>{% endif %}
         {% if empresa.telefone %}<small><strong>Telefone:</strong> {{ empresa.telefone }}</small><br>{% endif %}
@@ -120,35 +82,33 @@
       <div class="col-md-12"><strong>Endereço:</strong> {{ ordem.local.endereco }}</div>
       <div class="col-md-6"><strong>Data de Início:</strong> {{ ordem.data_inicio|date:"d/m/Y" }}</div>
       {% if ordem.data_termino %}
-      <div class="col-md-6"><strong>Data de Término:</strong> {{ ordem.data_termino|date:"d/m/Y" }}</div>
+        <div class="col-md-6"><strong>Data de Término:</strong> {{ ordem.data_termino|date:"d/m/Y" }}</div>
       {% endif %}
     </div>
   </div>
 
-  <!-- Serviços -->
+  <!-- Serviços / Álbuns (com seleção) -->
   <div>
-    <div class="titulo-secao">Serviços Selecionados</div>
-    {% for servico in ordem.servicos.all %}
-      <div class="form-check">
-        <input class="form-check-input" type="checkbox" id="servico{{ servico.id }}">
-        <label class="form-check-label" for="servico{{ servico.id }}">
-          {{ servico.descricao }} ({{ servico.categoria.nome }})
-        </label>
-      </div>
-      {% for album in servico.albuns.all %}
-        <div class="ms-4 form-check">
-          <input class="form-check-input" type="checkbox" id="album{{ album.id }}">
-          <label class="form-check-label" for="album{{ album.id }}">
-            Álbum: {{ album.nome }}
-          </label>
-          <div class="d-flex flex-wrap">
-            {% for foto in album.fotos.all|slice:":3" %}
-              <img src="{{ foto.imagem.url }}" alt="Foto" class="foto-preview">
-            {% endfor %}
-          </div>
+    <div class="titulo-secao">Serviços</div>
+
+    <!--
+      Este form envia por GET os IDs dos álbuns marcados como "albuns=<id>".
+      A view 'imprimir_ordem_servico_filtrado' deve ler request.GET.getlist('albuns')
+      e filtrar tanto os serviços quanto os álbuns exibidos.
+    -->
+   
+      {% for servico in servicos_filtrados|default:ordem.servicos.all %}
+        <div class="mt-2">
+        
+
+              {{ servico.descricao }}{% if servico.categoria %} ({{ servico.categoria.nome }}){% endif %}
+    
+       
         </div>
+      {% empty %}
+        <p class="text-muted">Nenhum serviço disponível.</p>
       {% endfor %}
-    {% endfor %}
+    
   </div>
 
   <!-- Observações -->
@@ -161,32 +121,27 @@
   <div class="titulo-secao">Ocorrências</div>
   <div class="quadro-ocorrencias"></div>
 
-  <!-- Local e Data -->
-  <div class="text-end mb-3">
-    <strong>Local e Data:</strong> ____________________________________, {{ hoje|date:"d/m/Y" }}
-  </div>
-
+  
   <!-- Assinaturas -->
-<div class="text-center assinaturas">
-  <div class="assinatura-bloco">
-    <div class="linha-assinatura"></div>
-    <small>Assinatura da {{ empresa.nome|default:"-" }}</small>
+  <div class="text-center assinaturas">
+    <div class="assinatura-bloco">
+      <div class="linha-assinatura"></div>
+      <small>Assinatura da {{ empresa.nome|default:"-" }}</small>
+    </div>
+    <div class="assinatura-bloco">
+      <div class="linha-assinatura"></div>
+      <small>Assinatura do Funcionário</small>
+    </div>
   </div>
-  <div class="assinatura-bloco">
-    <div class="linha-assinatura"></div>
-    <small>Assinatura do Funcionário</small>
-  </div>
-</div>
 
-<!-- Direção centralizada -->
-<div class="assinaturas mt-4" style="justify-content: center;">
-  <div class="assinatura-bloco" style="width: 45%; text-align: center;">
-    <p class="mb-0">Serviço finalizado em: _____ / _____ / _____</p>
-    <div class="linha-assinatura"></div>
-    <small>Assinatura da Direção / Responsável</small>
+  <!-- Direção centralizada -->
+  <div class="assinaturas mt-4" style="justify-content: center;">
+    <div class="assinatura-bloco" style="width: 45%; text-align: center;">
+      <p class="mb-0">Serviço finalizado em: _____ / _____ / _____</p>
+      <div class="linha-assinatura"></div>
+      <small>Assinatura da Direção / Responsável</small>
+    </div>
   </div>
-</div>
-
 
 </body>
 </html>

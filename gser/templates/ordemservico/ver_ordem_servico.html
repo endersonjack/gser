@@ -26,6 +26,11 @@
     padding-left: 1rem;
     padding-right: 1rem;
   }
+@media (min-width: 768px) {
+  /* aplica a largura mínima só no desktop/tablet */
+  #select-situacao, #situacao { min-width: 220px; }
+}
+
 </style>
 
 <script>
@@ -86,46 +91,45 @@
 {% block content %}
 <div class="container py-4">
 
-  <!-- Cabeçalho -->
-  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
-    <div class="d-flex align-items-center gap-3">
-      <h4 class="mb-0">
-        <i class="fa fa-file-alt me-2"></i> Detalhes: Ordem de Serviço nº {{ ordem.numero }}
-      </h4>
+<!-- Cabeçalho -->
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
+  <div class="d-flex align-items-center gap-3">
+    <h4 class="mb-0">
+      <i class="fa fa-file-alt me-2"></i> Detalhes: Ordem de Serviço nº {{ ordem.numero }}
+    </h4>
 
-      <!-- Situação Editável (somente desktop) -->
-      <form method="post" class="d-none d-md-flex align-items-center gap-2" id="form-situacao">
-  {% csrf_token %}
-  
-  <select name="situacao" id="select-situacao" class="form-select form-select-sm fw-bold text-white border-0 rounded">
-    {% for value, label in situacao_choices %}
-      <option value="{{ value }}" {% if value == ordem.situacao %}selected{% endif %}>{{ label }}</option>
-    {% endfor %}
-  </select>
+    <!-- Situação Editável (somente desktop) -->
+    <form method="post" id="form-situacao"
+          class="d-none d-md-flex align-items-center gap-2 mb-0 flex-nowrap">
+      {% csrf_token %}
 
-  <!-- Campo Data de Término (visível apenas se "finalizado") -->
-  <input
-    type="date"
-    name="data_termino"
-    id="data-termino"
-    class="form-control form-control-sm"
-    style="display: none; max-width: 160px;"
-    value="{{ ordem.data_termino|date:'Y-m-d' }}"
-  />
+      <label for="select-situacao" class="mb-0">Situação:</label>
 
-  <button type="submit" class="btn btn-outline-primary btn-sm">Salvar</button>
-</form>
+      <select name="situacao" id="select-situacao"
+              class="form-select form-select-sm fw-bold text-white border-0 rounded w-auto">
+        {% for value, label in situacao_choices %}
+          <option value="{{ value }}" {% if value == ordem.situacao %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
 
+      <!-- Campo Data de Término (visível apenas se "finalizado") -->
+      <input type="date"
+             name="data_termino"
+             id="data-termino"
+             class="form-control form-control-sm"
+             style="display:none; max-width:160px;"
+             value="{{ ordem.data_termino|date:'Y-m-d' }}" />
 
-
-
-
-    </div>
-
-    <a href="{% url 'dashboard_contrato' ordem.contrato.id %}" class="btn btn-outline-secondary d-none d-md-inline">
-      <i class="fa fa-arrow-left"></i> Voltar ao Contrato
-    </a>
+      <button type="submit" class="btn btn-outline-primary btn-sm">Salvar</button>
+    </form>
   </div>
+
+  <a href="{% url 'dashboard_contrato' ordem.contrato.id %}"
+     class="btn btn-outline-secondary d-none d-md-inline">
+    <i class="fa fa-arrow-left"></i> Voltar ao Contrato
+  </a>
+</div>
+
 
   <!-- Dados da OS -->
   <div class="card mb-4">
@@ -187,36 +191,45 @@
       {% if ordem.servicos.exists %}
         <div class="table-responsive mt-3">
           <table class="table table-striped align-middle">
-            <thead class="table-light">
-              <tr>
-                <th>#</th>
-                <th>Descrição</th>
-                <th>Categoria</th>
-                <th>Situação</th>
-                <th>Quantidade</th>
-                <th>Observação</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for servico in ordem.servicos.all %}
-              <tr>
-                <td>{{ forloop.counter }}</td>
-                <td>
-                  <a href="{% url 'visualizar_servico' ordem.id servico.id %}" class="text-decoration-none text-primary">
-                    {{ servico.descricao }}
-                  </a>
-                </td>
-                <td title="{{ servico.categoria.nome }}">{{ servico.categoria.nome }}</td>
-               <td class="text-center align-middle" data-servico-situacao="{{ servico.situacao }}" title="{{ servico.get_situacao_display }}">
+  <thead class="table-light">
+  <tr>
+    <th>#</th>
+    <th>Descrição</th>
+    <th>Categoria</th>
+    <th>Situação</th>
+    <th>Quantidade</th>
+    <th>Observação</th>
+    <th class="text-center" style="width: 90px;">Ações</th>  {# NOVA #}
+  </tr>
+</thead>
+<tbody>
+  {% for servico in ordem.servicos.all %}
+  <tr>
+    <td>{{ forloop.counter }}</td>
+    <td>
+      <a href="{% url 'visualizar_servico' ordem.id servico.id %}" class="text-decoration-none text-primary">
+        {{ servico.descricao }}
+      </a>
+    </td>
+    <td title="{{ servico.categoria.nome }}">{{ servico.categoria.nome }}</td>
+    <td class="text-center align-middle" data-servico-situacao="{{ servico.situacao }}" title="{{ servico.get_situacao_display }}">
+      {{ servico.get_situacao_display }}
+    </td>
+    <td title="{{ servico.quantidade }}">{{ servico.quantidade }}</td>
+    <td title="{{ servico.observacao }}">{{ servico.observacao }}</td>
 
-                  {{ servico.get_situacao_display }}
-                </td>
-                <td title="{{ servico.quantidade }}">{{ servico.quantidade }}</td>
-                <td title="{{ servico.observacao }}">{{ servico.observacao }}</td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+    {# Botão imprime só este serviço #}
+    <td class="text-center">
+      <a href="{% url 'imprimir_servico' ordem.id servico.id %}" class="btn btn-outline-secondary btn-sm" title="Imprimir este serviço" target="_blank" rel="noopener">
+        <i class="fa fa-print"></i>
+      </a>
+    </td>
+  </tr>
+  {% endfor %}
+</tbody>
+
+</table>
+
         </div>
       {% else %}
         <p class="text-muted">Nenhum serviço adicionado.</p>

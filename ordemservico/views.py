@@ -467,3 +467,55 @@ def imprimir_ordem_servico_pdf(request, ordem_id):
     resp = HttpResponse(pdf, content_type='application/pdf')
     resp['Content-Disposition'] = f'inline; filename="os_{ordem.numero_formatado}.pdf"'
     return resp
+
+
+# View para receber os IDs dos álbuns selecionados
+@login_required
+def imprimir_ordem_servico_filtrado(request, ordem_id):
+    ordem = get_object_or_404(OrdemServico, id=ordem_id)
+    empresa = Empresa.objects.first()
+    hoje = date.today()
+
+    albuns_ids = request.GET.getlist('albuns')  # vem do formulário com checkboxes
+
+    if albuns_ids:
+        servicos_filtrados = Servico.objects.filter(ordem=ordem, albuns__id__in=albuns_ids).distinct()
+    else:
+        servicos_filtrados = ordem.servicos.all()
+
+    return render(request, 'ordemservico/imprimir_ordem_servico.html', {
+        'ordem': ordem,
+        'empresa': empresa,
+        'hoje': hoje,
+        'servicos_filtrados': servicos_filtrados
+    })
+
+
+@login_required
+def imprimir_servico(request, ordem_id, servico_id):
+    ordem = get_object_or_404(OrdemServico, id=ordem_id)
+    servico = get_object_or_404(Servico, id=servico_id, ordem=ordem)
+    empresa = Empresa.objects.first()
+    hoje = date.today()
+    return render(request, 'ordemservico/imprimir_servico.html', {
+        'ordem': ordem,
+        'servico': servico,
+        'empresa': empresa,
+        'hoje': hoje
+    })
+
+@login_required
+def imprimir_servico_pdf(request, ordem_id, servico_id):
+    ordem = get_object_or_404(OrdemServico, id=ordem_id)
+    servico = get_object_or_404(Servico, id=servico_id, ordem=ordem)
+    empresa = Empresa.objects.first()
+    html_string = render_to_string('ordemservico/imprimir_servico.html', {
+        'ordem': ordem,
+        'servico': servico,
+        'empresa': empresa,
+        'hoje': date.today()
+    })
+    pdf = HTML(string=html_string, base_url=request.build_absolute_uri('/')).write_pdf()
+    resp = HttpResponse(pdf, content_type='application/pdf')
+    resp['Content-Disposition'] = f'inline; filename="os_{ordem.numero_formatado}_servico_{servico.id}.pdf"'
+    return resp
