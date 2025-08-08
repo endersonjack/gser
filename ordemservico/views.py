@@ -1,3 +1,4 @@
+from local.models import Local
 from .models import Categoria
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
@@ -339,8 +340,11 @@ def excluir_album(request, album_id):
 def buscar(request):
     contratos = Contrato.objects.all()
     categorias = Categoria.objects.all()
-    situacao_choices = OrdemServico._meta.get_field('situacao').choices
 
+    
+    locais = Local.objects.order_by('nome')  # ✅ ordem alfabética
+
+    situacao_choices = OrdemServico._meta.get_field('situacao').choices
     filtros = request.GET
     tipo_busca = filtros.get('tipo')
 
@@ -348,7 +352,8 @@ def buscar(request):
     resultados_servico = []
 
     if tipo_busca == 'os':
-        resultados_os = OrdemServico.objects.select_related('contrato', 'local')
+        resultados_os = (OrdemServico.objects
+                         .select_related('contrato', 'local'))
 
         if filtros.get('contrato'):
             resultados_os = resultados_os.filter(contrato_id=filtros['contrato'])
@@ -359,8 +364,12 @@ def buscar(request):
         if filtros.get('situacao'):
             resultados_os = resultados_os.filter(situacao=filtros['situacao'])
 
+        if filtros.get('local'):
+            resultados_os = resultados_os.filter(local_id=filtros['local'])
+
     elif tipo_busca == 'servico':
-        resultados_servico = Servico.objects.select_related('ordem', 'categoria', 'ordem__contrato', 'ordem__local')
+        resultados_servico = (Servico.objects
+                              .select_related('ordem', 'categoria', 'ordem__contrato', 'ordem__local'))
 
         if filtros.get('descricao'):
             resultados_servico = resultados_servico.filter(descricao__icontains=filtros['descricao'])
@@ -371,6 +380,9 @@ def buscar(request):
         if filtros.get('situacao_servico'):
             resultados_servico = resultados_servico.filter(situacao=filtros['situacao_servico'])
 
+        if filtros.get('local'):
+            resultados_servico = resultados_servico.filter(ordem__local_id=filtros['local'])
+
         if filtros.get('data_inicio'):
             resultados_servico = resultados_servico.filter(ordem__data_inicio__gte=filtros['data_inicio'])
 
@@ -380,12 +392,15 @@ def buscar(request):
     return render(request, 'ordemservico/buscar_os.html', {
         'contratos': contratos,
         'categorias': categorias,
+        'locais': locais,                         # ✅ envia pro template
         'situacao_choices': situacao_choices,
         'filtros': filtros,
         'resultados_os': resultados_os,
         'resultados_servico': resultados_servico,
         'tem_resultados': bool(resultados_os or resultados_servico),
     })
+
+
 
 @login_required
 def exportar_resultado_pdf(request):

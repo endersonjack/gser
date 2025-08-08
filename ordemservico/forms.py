@@ -2,6 +2,8 @@ from django import forms
 from django.forms import inlineformset_factory
 from .models import OrdemServico, Servico, Categoria
 from .models import Album, Foto
+from .models import Local  # ✅ para ordenar por nome
+
 
 class OrdemServicoForm(forms.ModelForm):
     class Meta:
@@ -20,6 +22,12 @@ class OrdemServicoForm(forms.ModelForm):
             'observacao': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # ✅ Locais sempre em ordem alfabética
+        self.fields['local'].queryset = Local.objects.order_by('nome')
+
+
 class OrdemServicoEditForm(forms.ModelForm):
     class Meta:
         model = OrdemServico
@@ -30,7 +38,7 @@ class OrdemServicoEditForm(forms.ModelForm):
         ]
         widgets = {
             'numero': forms.TextInput(attrs={'class': 'form-control'}),
-            'contrato': forms.Select(attrs={'class': 'form-select'}),  # <- ADICIONADO
+            'contrato': forms.Select(attrs={'class': 'form-select'}),
             'local': forms.Select(attrs={'class': 'form-select'}),
             'situacao': forms.Select(attrs={'class': 'form-select'}),
             'data_inicio': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
@@ -39,7 +47,11 @@ class OrdemServicoEditForm(forms.ModelForm):
             'motivo_pendente_paralisado': forms.Textarea(attrs={'rows': 1, 'class': 'form-control'}),
             'observacao': forms.Textarea(attrs={'rows': 1, 'class': 'form-control'}),
         }
-       
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # ✅ Locais sempre em ordem alfabética
+        self.fields['local'].queryset = Local.objects.order_by('nome')
 
 
 class ServicoForm(forms.ModelForm):
@@ -60,6 +72,7 @@ class ServicoForm(forms.ModelForm):
         if self.instance and self.instance.quantidade is None:
             self.initial['quantidade'] = ''
 
+
 class CategoriaForm(forms.ModelForm):
     class Meta:
         model = Categoria
@@ -69,8 +82,8 @@ class CategoriaForm(forms.ModelForm):
             'descricao': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
-# Formset para Serviços Inline
 
+# Formset para Serviços Inline
 ServicoFormSet = inlineformset_factory(
     parent_model=OrdemServico,
     model=Servico,
@@ -83,12 +96,15 @@ ServicoFormSet = inlineformset_factory(
     can_delete=True
 )
 
+
 class AlbumForm(forms.ModelForm):
     class Meta:
         model = Album
         fields = ['nome', 'descricao']
 
+
 from django.forms.widgets import ClearableFileInput
+
 
 class MultiFileInput(ClearableFileInput):
     allow_multiple_selected = True
