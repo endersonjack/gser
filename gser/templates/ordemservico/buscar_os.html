@@ -20,6 +20,13 @@
       height: 100%;
       right: 6px;
     }
+    .col-qtd {
+  max-width: 80px;       /* largura máxima da célula */
+  white-space: nowrap;   /* impede quebra de linha */
+  overflow: hidden;      /* esconde o excesso */
+  text-overflow: ellipsis; /* adiciona "..." no final */
+}
+
   </style>
 {% endblock %}
 
@@ -119,23 +126,27 @@
               <table class="table table-bordered table-hover align-middle">
                 <thead class="table-light">
                   <tr>
-                    <th>#</th>
-                    <th>Nº OS</th>
+                    <th class="text-center">#</th>
+                    <th class="text-center">Nº OS</th>
                     <th>Contrato</th>
                     <th>Local</th>
-                    <th>Início</th>
-                    <th>Situação</th>
+                    <th class="text-center">Início</th>
+                    <th class="text-center">Situação</th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for os in resultados_os %}
                     <tr class="clickable-row" data-href="{% url 'ver_ordem_servico' os.id %}" style="cursor: pointer;">
-                      <td>{{ forloop.counter }}</td>
-                      <td>{{ os.numero_formatado }}</td>
+                      <td class="text-center">{{ forloop.counter }}</td>
+                      <td class="text-center">{{ os.numero_formatado }} {% if os.urgente %}
+                       <span id="badge-urgente" class="badge rounded-pill" style="background:#dc3545;color:#fff;">
+                        <i class="fa fa-bolt me-1"></i> URGENTE
+                      </span>  
+                      {% endif %}</td>
                       <td>{{ os.contrato.numero }}</td>
                       <td>{{ os.local.nome }}</td>
-                      <td>{{ os.data_inicio|date:"d/m/Y" }}</td>
-                      <td>{{ os.get_situacao_display }}</td>
+                      <td class="text-center">{{ os.data_inicio|date:"d/m/Y" }}</td>
+                      <td class="text-center">{{ os.get_situacao_display }}</td>
                     </tr>
                   {% endfor %}
                 </tbody>
@@ -232,7 +243,7 @@
                     <th>Descrição</th>
                     <th>Categoria</th>
                     <th>Situação</th>
-                    <th>Qtd</th>
+                    <th class="col-qtd text-center">Qtd</th>
                     <th>Nº OS</th>
                   </tr>
                 </thead>
@@ -242,8 +253,12 @@
                       <td>{{ forloop.counter }}</td>
                       <td>{{ servico.descricao|truncatechars:60 }}</td>
                       <td>{{ servico.categoria.nome }}</td>
-                      <td>{{ servico.get_situacao_display }}</td>
-                      <td>{{ servico.quantidade }}</td>
+                      <td>{{ servico.get_situacao_display }} {% if servico.urgente %}
+                       <span id="badge-urgente" class="badge rounded-pill" style="background:#dc3545;color:#fff;">
+                        <i class="fa fa-bolt me-1"></i> URGENTE
+                      </span>  
+                      {% endif %}</td>
+                      <td class="col-qtd text-center" title="{{ servico.quantidade }}">{{ servico.quantidade }}</td>
                       <td>{{ servico.ordem.numero_formatado }}</td>
                     </tr>
                   {% endfor %}

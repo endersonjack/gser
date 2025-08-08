@@ -37,6 +37,11 @@ urlpatterns = [
     path('ordem/<int:ordem_id>/servico/<int:servico_id>/', visualizar_servico, name='visualizar_servico'),
     path('ordem/<int:ordem_id>/servico/<int:servico_id>/excluir/', excluir_servico, name='excluir_servico'),
 
+    path('ordem/<int:ordem_id>/alternar-urgente/', alternar_urgente, name='alternar_urgente'),
+    path('ordem/<int:ordem_id>/servico/<int:servico_id>/alternar-urgente/', alternar_urgente_servico, name='alternar_urgente_servico'),
+
+
+
  
     path('ordem/<int:ordem_id>/servico/<int:servico_id>/fotos/', listar_albuns, name='listar_albuns'),
     path('ordem/<int:ordem_id>/servico/<int:servico_id>/fotos/novo/', criar_album, name='criar_album'),

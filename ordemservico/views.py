@@ -17,6 +17,8 @@ from datetime import date
 from configuracoes.models import Empresa
 from diariodeobras.models import Orgao
 
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 
 
 
@@ -441,6 +443,33 @@ def exportar_resultado_pdf(request):
     response['Content-Disposition'] = 'inline; filename="relatorio_busca.pdf"'
     response.write(result)
     return response
+
+
+@require_POST
+@login_required
+def alternar_urgente(request, ordem_id):
+    ordem = get_object_or_404(OrdemServico, id=ordem_id)
+    urgente_val = request.POST.get('urgente')
+    ordem.urgente = (urgente_val == '1')
+    ordem.save()
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'ok': True, 'urgente': ordem.urgente})
+    messages.success(request, "Prioridade atualizada.")
+    return redirect('ver_ordem_servico', ordem_id=ordem.id)
+
+
+
+@require_POST
+@login_required
+def alternar_urgente_servico(request, ordem_id, servico_id):
+    servico = get_object_or_404(Servico, id=servico_id, ordem_id=ordem_id)
+    servico.urgente = (request.POST.get('urgente') == '1')
+    servico.save()
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'ok': True, 'urgente': servico.urgente})
+    messages.success(request, "Prioridade do serviço atualizada.")
+    return redirect('visualizar_servico', ordem_id=ordem_id, servico_id=servico.id)
+
 
 
 ### UTILS  ###

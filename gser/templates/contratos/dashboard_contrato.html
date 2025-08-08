@@ -312,25 +312,30 @@
             <table class="table table-bordered table-hover table-striped align-middle">
               <thead class="table-light">
                 <tr>
-                  <th>#</th>
-                  <th>Nº OS</th>
+                  <th class="text-center">#</th>
+                  <th class="text-center">Nº OS</th>
                   <th>Localidade</th>
-                  <th>Início</th>
-                  <th>Situação</th>
+                  <th class="text-center">Início</th>
+                  <th class="text-center">Situação</th>
                 </tr>
               <tbody>
               </thead>
                 {% for ordem in ultimas_ordens %}
                 <tr>
-                  <td>{{ forloop.counter }}</td>
-                  <td>
+                  <td class="text-center">{{ forloop.counter }}</td>
+                  <td class="text-center">
                     <a href="{% url 'ver_ordem_servico' ordem.id %}">
-                      {{ ordem.numero_formatado }}
+                      {{ ordem.numero_formatado }}  
+                      {% if ordem.urgente %}
+                       <span id="badge-urgente" class="badge rounded-pill" style="background:#dc3545;color:#fff;">
+                        <i class="fa fa-bolt me-1"></i> URGENTE
+                      </span>  
+                      {% endif %}
                     </a>
                   </td>
                   <td>{{ ordem.local.nome|default:"-" }}</td>
-                  <td>{{ ordem.data_inicio|date:"d/m/Y" }}</td>
-                  <td>{{ ordem.get_situacao_display }}</td>
+                  <td class="text-center">{{ ordem.data_inicio|date:"d/m/Y" }}</td>
+                  <td class="text-center">{{ ordem.get_situacao_display }}</td>
                 </tr>
                 {% empty %}
                 <tr><td colspan="5" class="text-center text-muted">Nenhuma ordem encontrada.</td></tr>

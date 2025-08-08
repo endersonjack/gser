@@ -217,7 +217,7 @@
             <thead class="table-light">
               <tr>
                 <th>Contrato</th>
-                <th>Nº O.S.</th>
+                <th class="text-center">Nº O.S.</th>
                 <th>Local</th>
                 <th>Início</th>
                 <th>Status</th>
@@ -227,7 +227,11 @@
               {% for ordem in ordens_recentes %}
               <tr>
                 <td><a href="{% url 'dashboard_contrato' ordem.contrato.id %}">{{ ordem.contrato.numero }}</a></td>
-                <td><a href="{% url 'ver_ordem_servico' ordem.id %}">{{ ordem.numero }}</a></td>
+                <td class="text-center"><a href="{% url 'ver_ordem_servico' ordem.id %}">{{ ordem.numero }} {% if ordem.urgente %}
+                       <span id="badge-urgente" class="badge rounded-pill" style="background:#dc3545;color:#fff;">
+                        <i class="fa fa-bolt me-1"></i> URGENTE
+                      </span>  
+                      {% endif %}</a></td>
                 <td>{{ ordem.local.nome|default:"-" }}</td>
                 <td>{{ ordem.data_inicio|date:"d/m/Y" }}</td>
                 <td>{{ ordem.get_situacao_display }}</td>

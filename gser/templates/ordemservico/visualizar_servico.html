@@ -17,6 +17,21 @@
     padding-left: 1rem;
     padding-right: 1rem;
   }
+  /* Banner URGENTE */
+  .urgente-banner {
+    background: #ffe6e9;
+    border: 2px dashed #dc3545;
+    color: #b02a37;
+    padding: .75rem 1rem;
+    border-radius: .5rem;
+    font-weight: 700;
+    align-items: center;
+    gap: .5rem;
+    display: flex;
+  }
+  .urgente-banner i {
+    font-size: 1.1rem;
+  }
 </style>
 
 <script>
@@ -41,6 +56,7 @@
 
   <!-- Cabeçalho da OS -->
   <div class="card mb-4">
+    
     <div class="card-header">
       <div class="d-flex justify-content-between flex-wrap gap-2 align-items-start">
 
@@ -116,14 +132,57 @@
   </div>
 
   <!-- Card de Detalhes do Serviço -->
-  <div class="card mb-4">
-    <div class="card-body">
-      <p><strong>Categoria:</strong> {{ servico.categoria.nome }}</p>
-      <p><strong>Situação:</strong> {{ servico.get_situacao_display }}</p>
-      <p><strong>Quantidade:</strong> {{ servico.quantidade }}</p>
-      <p><strong>Observação:</strong> {{ servico.observacao }}</p>
+<!-- Card de Detalhes do Serviço -->
+<div class="card mb-4">
+  <div class="card-body">
+    {# Banner só quando for urgente (mantido) #}
+    {% if servico.urgente %}
+      <div class="urgente-banner mb-3">
+        <i class="fa fa-triangle-exclamation"></i>
+        Este serviço foi marcada como URGENTE e requer atenção imediata.
+      </div>
+    {% endif %}
+
+    <!-- Linha superior: badge + switch na direita -->
+    <div class="d-flex justify-content-between align-items-start mb-3">
+      <div></div>
+      <div class="d-flex align-items-center gap-2">
+
+        {# Badge de prioridade do Serviço #}
+        {% if servico.urgente %}
+          <span id="badge-urgente-serv" class="badge rounded-pill" style="background:#dc3545;color:#fff;">
+            <i class="fa fa-bolt me-1"></i> URGENTE
+          </span>
+        {% else %}
+          <span id="badge-urgente-serv" class="badge rounded-pill bg-secondary">
+            <i class="fa fa-circle me-1"></i> Normal
+          </span>
+        {% endif %}
+
+        {# Switch liga/desliga que salva via POST (AJAX) #}
+        <form method="post"
+              action="{% url 'alternar_urgente_servico' ordem.id servico.id %}"
+              class="d-flex align-items-center"
+              id="form-urgente-serv">
+          {% csrf_token %}
+          <input type="hidden" name="urgente" id="urgente-hidden-serv"
+                 value="{% if servico.urgente %}1{% else %}0{% endif %}">
+          <div class="form-check form-switch m-0">
+            <input class="form-check-input" type="checkbox" role="switch"
+                   id="switch-urgente-serv" {% if servico.urgente %}checked{% endif %}>
+            <label class="form-check-label ms-1" for="switch-urgente-serv">Prioridade</label>
+          </div>
+        </form>
+      </div>
     </div>
+
+    <p><strong>Categoria:</strong> {{ servico.categoria.nome }}</p>
+    <p><strong>Situação:</strong> {{ servico.get_situacao_display }}</p>
+    <p><strong>Quantidade:</strong> {{ servico.quantidade }}</p>
+    <p><strong>Observação:</strong> {{ servico.observacao }}</p>
   </div>
+</div>
+
 
   <!-- Editar: mobile -->
   <div class="d-md-none mb-4">
@@ -227,4 +286,24 @@
   </div>
 
 </div>
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const sw = document.getElementById('switch-urgente-serv');
+  const hidden = document.getElementById('urgente-hidden-serv');
+  const form = document.getElementById('form-urgente-serv');
+
+  if (!sw) return;
+
+  sw.addEventListener('change', function () {
+    hidden.value = sw.checked ? '1' : '0';
+    form.submit(); // 🔁 recarrega a página via POST + redirect da view
+  });
+});
+</script>
+
+
+
+
+{% endblock %}
 {% endblock %}

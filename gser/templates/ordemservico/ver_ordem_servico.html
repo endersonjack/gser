@@ -13,28 +13,54 @@
   .bg-finalizado { background-color: #198754 !important; color: #fff !important; }
   .bg-cancelado { background-color: #dc3545 !important; color: #fff !important; }
 
-  .text-white-important {
+  [data-servico-situacao="finalizado"] {
+    font-weight: bold;
     color: #fff !important;
   }
-  [data-servico-situacao="finalizado"] {
-  font-weight: bold;
-  color: #fff !important;
-}
 
   #select-situacao {
     min-width: 220px;
     padding-left: 1rem;
     padding-right: 1rem;
   }
-@media (min-width: 768px) {
-  /* aplica a largura mínima só no desktop/tablet */
-  #select-situacao, #situacao { min-width: 220px; }
-}
+  @media (min-width: 768px) {
+    #select-situacao, #situacao { min-width: 220px; }
+  }
 
+  /* Badge URGENTE */
+  .badge-urgente {
+    background-color: #dc3545;
+    color: #fff;
+    font-size: .85rem;
+    padding: .35em .6em;
+    border-radius: .25rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+  }
+  .badge-urgente i {
+    font-size: .9rem;
+  }
+
+  /* Banner URGENTE */
+  .urgente-banner {
+    background: #ffe6e9;
+    border: 2px dashed #dc3545;
+    color: #b02a37;
+    padding: .75rem 1rem;
+    border-radius: .5rem;
+    font-weight: 700;
+    align-items: center;
+    gap: .5rem;
+    display: flex;
+  }
+  .urgente-banner i {
+    font-size: 1.1rem;
+  }
 </style>
 
 <script>
-
   document.addEventListener("DOMContentLoaded", function () {
     const select = document.getElementById('select-situacao');
     const dataTermino = document.getElementById('data-termino');
@@ -47,37 +73,24 @@
       } else {
         dataTermino.style.display = 'none';
         dataTermino.required = false;
-        dataTermino.value = '';  // limpa a data se não for finalizado
+        dataTermino.value = '';
       }
     }
 
     select.addEventListener('change', toggleDataTermino);
-    toggleDataTermino(); // inicial
+    toggleDataTermino();
 
     if (situacao) {
-      // SELECT
-      const select = document.getElementById('select-situacao');
-      if (select) {
-        select.classList.add('bg-' + situacao, 'text-white');
-      }
-
-      // CABEÇALHO
+      select.classList.add('bg-' + situacao, 'text-white');
       const header = document.getElementById('header-ordem');
-      if (header) {
-        header.classList.add('bg-' + situacao, 'text-white');
-      }
+      if (header) header.classList.add('bg-' + situacao, 'text-white');
 
-      // SITUAÇÃO DOS SERVIÇOS
       document.querySelectorAll('[data-servico-situacao]').forEach(function (el) {
         const val = el.dataset.servicoSituacao;
         el.classList.add('bg-' + val, 'fw-bold');
-
-        // Se não for warning (amarelo), força branco
         if (!['pendente', 'paralisado'].includes(val)) {
           el.classList.add('text-white');
         }
-
-        // Ícone se finalizado
         if (val === 'finalizado' && !el.innerHTML.includes('fa-check-circle')) {
           el.innerHTML += ' <i class="fa fa-check-circle ms-1"></i>';
         }
@@ -85,7 +98,6 @@
     }
   });
 </script>
-
 {% endblock %}
 
 {% block content %}
@@ -93,33 +105,33 @@
 
 <!-- Cabeçalho -->
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-2">
-  <div class="d-flex align-items-center gap-3">
-    <h4 class="mb-0">
-      <i class="fa fa-file-alt me-2"></i> Detalhes: Ordem de Serviço nº {{ ordem.numero }}
+  <div class="d-flex align-items-center gap-3 flex-wrap">
+    <h4 class="mb-0 d-flex align-items-center gap-2">
+      <i class="fa fa-file-alt"></i> Detalhes: Ordem de Serviço nº {{ ordem.numero }}
+      {% if ordem.urgente %}
+        <span class="badge-urgente">
+          <i class="fa fa-bolt"></i> URGENTE
+        </span>
+      {% endif %}
     </h4>
 
     <!-- Situação Editável (somente desktop) -->
     <form method="post" id="form-situacao"
           class="d-none d-md-flex align-items-center gap-2 mb-0 flex-nowrap">
       {% csrf_token %}
-
       <label for="select-situacao" class="mb-0">Situação:</label>
-
       <select name="situacao" id="select-situacao"
               class="form-select form-select-sm fw-bold text-white border-0 rounded w-auto">
         {% for value, label in situacao_choices %}
           <option value="{{ value }}" {% if value == ordem.situacao %}selected{% endif %}>{{ label }}</option>
         {% endfor %}
       </select>
-
-      <!-- Campo Data de Término (visível apenas se "finalizado") -->
       <input type="date"
              name="data_termino"
              id="data-termino"
              class="form-control form-control-sm"
              style="display:none; max-width:160px;"
              value="{{ ordem.data_termino|date:'Y-m-d' }}" />
-
       <button type="submit" class="btn btn-outline-primary btn-sm">Salvar</button>
     </form>
   </div>
@@ -130,125 +142,172 @@
   </a>
 </div>
 
+<!-- Dados da OS -->
+<div class="card mb-4">
+  <div id="header-ordem"
+       class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <strong>Dados da Ordem de Serviço</strong>
 
-  <!-- Dados da OS -->
-  <div class="card mb-4">
-    <div id="header-ordem" class="card-header d-flex justify-content-between align-items-center">
-      <strong>Dados da Ordem de Serviço</strong>
+    <div class="d-flex align-items-center gap-2">
 
-<!-- Botão Dropdown de Ações -->
-<div class="dropdown">
-  <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-    <i class="fa fa-cog"></i> Ações
-  </button>
-  <ul class="dropdown-menu">
-    <li>
-      <a class="dropdown-item" href="{% url 'editar_ordem_servico' ordem.id %}">
-        <i class="fa fa-pen me-2"></i> Editar Dados da OS
-      </a>
-    </li>
-    <li>
-      <a class="dropdown-item" href="{% url 'imprimir_ordem_servico' ordem.id %}" target="_blank">
-        <i class="fa fa-print me-2"></i> Imprimir OS
-      </a>
-    </li>
-    <li>
-      <a class="dropdown-item" href="{% url 'diario_de_obras' ordem.id %}" target="_blank">
-        <i class="fa fa-book me-2"></i> Diário de Obras
-      </a>
-    </li>
-  </ul>
+  {# Badge à direita #}
+  {% if ordem.urgente %}
+    <span id="badge-urgente" class="badge rounded-pill" style="background:#dc3545;color:#fff;">
+      <i class="fa fa-bolt me-1"></i> URGENTE
+    </span>
+  {% else %}
+    <span id="badge-urgente" class="badge rounded-pill bg-secondary">
+      <i class="fa fa-circle me-1"></i> Normal
+    </span>
+  {% endif %}
+
+  {# Switch liga/desliga que salva (POST) #}
+  <form method="post"
+        action="{% url 'alternar_urgente' ordem.id %}"
+        class="d-flex align-items-center"
+        id="form-urgente">
+    {% csrf_token %}
+    <input type="hidden" name="urgente" id="urgente-hidden"
+           value="{% if ordem.urgente %}1{% else %}0{% endif %}">
+    <div class="form-check form-switch m-0">
+      <input class="form-check-input" type="checkbox" role="switch"
+             id="switch-urgente" {% if ordem.urgente %}checked{% endif %}>
+      <label class="form-check-label ms-1" for="switch-urgente">Prioridade</label>
+    </div>
+  </form>
+
+      {# ---- Dropdown de ações (como já tinha) ---- #}
+      <div class="dropdown">
+        <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="fa fa-cog"></i> Ações
+        </button>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item" href="{% url 'editar_ordem_servico' ordem.id %}">
+            <i class="fa fa-pen me-2"></i> Editar Dados da OS
+          </a></li>
+          <li><a class="dropdown-item" href="{% url 'imprimir_ordem_servico' ordem.id %}" target="_blank">
+            <i class="fa fa-print me-2"></i> Imprimir OS
+          </a></li>
+          <li><a class="dropdown-item" href="{% url 'diario_de_obras' ordem.id %}" target="_blank">
+            <i class="fa fa-book me-2"></i> Diário de Obras
+          </a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-body">
+    {# Banner só quando for urgente (mantido) #}
+    {% if ordem.urgente %}
+      <div class="urgente-banner mb-3">
+        <i class="fa fa-triangle-exclamation"></i>
+        Esta ordem de serviço foi marcada como URGENTE e requer atenção imediata.
+      </div>
+    {% endif %}
+
+    <p><strong>Contrato:</strong> {{ ordem.contrato.numero }}</p>
+    <p><strong>Local:</strong> {{ ordem.local.nome }}</p>
+    <p><strong>Data Início:</strong> {{ ordem.data_inicio|date:"d/m/Y" }}</p>
+    {% if ordem.situacao == "finalizado" %}
+      <p class="fw-bold text-success">
+        <i class="fa fa-check-circle me-1"></i> Finalizado
+        {% if ordem.data_termino %}({{ ordem.data_termino|date:"d/m/y" }}){% endif %}
+      </p>
+    {% endif %}
+    {% if ordem.data_paralisado %}
+      <p><strong>Data Paralisado:</strong> {{ ordem.data_paralisado|date:"d/m/Y" }}</p>
+      <p><strong>Motivo:</strong> {{ ordem.motivo_pendente_paralisado }}</p>
+    {% endif %}
+    {% if ordem.observacao %}
+      <p><strong>Observações:</strong> {{ ordem.observacao }}</p>
+    {% endif %}
+  </div>
 </div>
 
 
-            
-    </div>
-    <div class="card-body">
-      <p><strong>Contrato:</strong> {{ ordem.contrato.numero }}</p>
-      <p><strong>Local:</strong> {{ ordem.local.nome }}</p>
-      <p><strong>Data Início:</strong> {{ ordem.data_inicio|date:"d/m/Y" }}</p>
-      {% if ordem.situacao == "finalizado" %}
-        <p class="fw-bold text-success">
-          <i class="fa fa-check-circle me-1"></i> Finalizado 
-          {% if ordem.data_termino %}({{ ordem.data_termino|date:"d/m/y" }}){% endif %}
-        </p>
-      {% endif %}
-      {% if ordem.data_paralisado %}
-        <p><strong>Data Paralisado:</strong> {{ ordem.data_paralisado|date:"d/m/Y" }}</p>
-        <p><strong>Motivo:</strong> {{ ordem.motivo_pendente_paralisado }}</p>
-      {% endif %}
-      {% if ordem.observacao %}
-        <p><strong>Observações:</strong> {{ ordem.observacao }}</p>
-      {% endif %}
-    </div>
-  </div>
-
-  <!-- Serviços -->
-  <div class="card mb-4">
-    <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
-      <strong>Serviços Associados</strong>
-      <a href="{% url 'adicionar_servicos_ordem' ordem.id %}" class="btn btn-light btn-sm">
-        <i class="fa fa-plus-circle"></i> Adicionar Serviço
-      </a>
-    </div>
-
-    <div class="card-body">
-      <small>Clique na descrição para visualizar o serviço</small>
-      {% if ordem.servicos.exists %}
-        <div class="table-responsive mt-3">
-          <table class="table table-striped align-middle">
-  <thead class="table-light">
-  <tr>
-    <th>#</th>
-    <th>Descrição</th>
-    <th>Categoria</th>
-    <th>Situação</th>
-    <th>Quantidade</th>
-    <th>Observação</th>
-    <th class="text-center" style="width: 90px;">Ações</th>  {# NOVA #}
-  </tr>
-</thead>
-<tbody>
-  {% for servico in ordem.servicos.all %}
-  <tr>
-    <td>{{ forloop.counter }}</td>
-    <td>
-      <a href="{% url 'visualizar_servico' ordem.id servico.id %}" class="text-decoration-none text-primary">
-        {{ servico.descricao }}
-      </a>
-    </td>
-    <td title="{{ servico.categoria.nome }}">{{ servico.categoria.nome }}</td>
-    <td class="text-center align-middle" data-servico-situacao="{{ servico.situacao }}" title="{{ servico.get_situacao_display }}">
-      {{ servico.get_situacao_display }}
-    </td>
-    <td title="{{ servico.quantidade }}">{{ servico.quantidade }}</td>
-    <td title="{{ servico.observacao }}">{{ servico.observacao }}</td>
-
-    {# Botão imprime só este serviço #}
-    <td class="text-center">
-      <a href="{% url 'imprimir_servico' ordem.id servico.id %}" class="btn btn-outline-secondary btn-sm" title="Imprimir este serviço" target="_blank" rel="noopener">
-        <i class="fa fa-print"></i>
-      </a>
-    </td>
-  </tr>
-  {% endfor %}
-</tbody>
-
-</table>
-
-        </div>
-      {% else %}
-        <p class="text-muted">Nenhum serviço adicionado.</p>
-      {% endif %}
-    </div>
-  </div>
-
-  <!-- Botão Voltar: mobile -->
-  <div class="d-md-none mt-4">
-    <a href="{% url 'dashboard_contrato' ordem.contrato.id %}" class="btn btn-outline-secondary w-100">
-      <i class="fa fa-arrow-left"></i> Voltar ao Contrato
+<!-- Serviços -->
+<div class="card mb-4">
+  <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+    <strong>Serviços Associados</strong>
+    <a href="{% url 'adicionar_servicos_ordem' ordem.id %}" class="btn btn-light btn-sm">
+      <i class="fa fa-plus-circle"></i> Adicionar Serviço
     </a>
   </div>
+  <div class="card-body">
+    <small>Clique na descrição para visualizar o serviço</small>
+    {% if ordem.servicos.exists %}
+      <div class="table-responsive mt-3">
+        <table class="table table-striped align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>Descrição</th>
+              <th>Categoria</th>
+              <th>Situação</th>
+              <th>Quantidade</th>
+              <th>Observação</th>
+              <th class="text-center" style="width: 90px;">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for servico in ordem.servicos.all %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>
+                <a href="{% url 'visualizar_servico' ordem.id servico.id %}" class="text-decoration-none text-primary">
+                  {{ servico.descricao }}
+                </a>
+              </td>
+              <td title="{{ servico.categoria.nome }}">{{ servico.categoria.nome }}</td>
+              <td class="text-center align-middle" data-servico-situacao="{{ servico.situacao }}" title="{{ servico.get_situacao_display }}">
+                {{ servico.get_situacao_display }}
+              </td>
+              <td title="{{ servico.quantidade }}">{{ servico.quantidade }}</td>
+              <td title="{{ servico.observacao }}">{{ servico.observacao }}</td>
+              <td class="text-center">
+                <a href="{% url 'imprimir_servico' ordem.id servico.id %}" class="btn btn-outline-secondary btn-sm" title="Imprimir este serviço" target="_blank" rel="noopener">
+                  <i class="fa fa-print"></i>
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="text-muted">Nenhum serviço adicionado.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Voltar (mobile) -->
+<div class="d-md-none mt-4">
+  <a href="{% url 'dashboard_contrato' ordem.contrato.id %}" class="btn btn-outline-secondary w-100">
+    <i class="fa fa-arrow-left"></i> Voltar ao Contrato
+  </a>
+</div>
 
 </div>
+
+
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const sw = document.getElementById('switch-urgente');
+  const hidden = document.getElementById('urgente-hidden');
+  const form = document.getElementById('form-urgente');
+
+  if (!sw) return;
+
+  sw.addEventListener('change', function () {
+    hidden.value = sw.checked ? '1' : '0';
+    form.submit(); // 🔁 recarrega a página via POST + redirect da view
+  });
+});
+</script>
+
+
+
+{% endblock %}
 {% endblock %}
