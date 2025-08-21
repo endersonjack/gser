@@ -101,18 +101,20 @@ class ServicoForm(forms.ModelForm):
         fields = [
             'descricao', 'situacao', 'quantidade',
             'categoria', 'observacao',
-            'prazo_entrega', 'data_finalizacao',   # <-- NOVOS
-            'urgente'                              # <-- útil já no cadastro do serviço
+            'prazo_entrega', 'data_finalizacao',
+            'urgente'
         ]
         widgets = {
             'descricao': forms.Textarea(attrs={'rows': 1, 'class': 'form-control', 'placeholder': 'Descreva o serviço...'}),
-            'situacao': forms.Select(attrs={'class': 'form-select'}),
-            'quantidade': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),  # aceita parágrafos
+            # Damos um id estável para casar com o JS do template
+            'situacao': forms.Select(attrs={'class': 'form-select', 'id': 'id_situacao'}),
+            'quantidade': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
             'categoria': forms.Select(attrs={'class': 'form-select'}),
             'observacao': forms.Textarea(attrs={'rows': 1, 'class': 'form-control'}),
+             
+            'prazo_entrega': forms.DateInput(format="%Y-%m-%d", attrs={'type': 'date', 'class': 'form-control'}),
+            'data_finalizacao': forms.DateInput(format="%Y-%m-%d", attrs={'type': 'date', 'class': 'form-control'}),
 
-            'prazo_entrega': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),   # <-- NOVO
-            'data_finalizacao': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),# <-- NOVO
             'urgente': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
         labels = {
@@ -122,11 +124,24 @@ class ServicoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Evita que "None" apareça no campo de texto
         if self.instance and self.instance.quantidade is None:
             self.initial['quantidade'] = ''
-        # Ordena categorias alfabeticamente
         self.fields['categoria'].queryset = Categoria.objects.order_by('nome')
+
+    def clean(self):
+        cleaned = super().clean()
+        situacao = cleaned.get('situacao')
+        data_finalizacao = cleaned.get('data_finalizacao')
+
+        # Obrigatório quando finalizado
+        if situacao == 'finalizado' and not data_finalizacao:
+            self.add_error('data_finalizacao', 'Obrigatório quando a situação for Finalizado.')
+
+        # Sempre limpar quando NÃO finalizado (consistência com o template)
+        if situacao != 'finalizado':
+            cleaned['data_finalizacao'] = None
+
+        return cleaned
 
 
 # -------------------------

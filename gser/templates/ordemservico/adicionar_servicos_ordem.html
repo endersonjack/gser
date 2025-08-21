@@ -1,22 +1,19 @@
 {% extends "mobile_menu_base.html" %}
 {% load static %}
 
-{% block title %}Editar Ordem de Serviço — OS {{ ordem.numero }}{% endblock %}
+{% block title %}Adicionar Serviço — OS {{ ordem.numero }}{% endblock %}
 
 {% block extra_head %}
 <style>
-  /* Evitar overflow lateral */
   .wrapper{ overflow-x:hidden; }
   .main-content{ flex:1; min-width:0; overflow-x:hidden; padding:20px; }
-
-  /* Garantir que nada “estoure” a largura */
   .container, .container-fluid, .card, .card-body { max-width:100%; overflow-x:hidden; }
   img, table { max-width:100%; height:auto; }
 
   .page-title { font-weight: 700; }
-  .muted-line { font-size: .9rem; color: #6c757d; }
-  .field-group { margin-bottom: .75rem; }
-  .field-group .form-label { font-weight: 600; font-size: .9rem; margin-bottom: .3rem; }
+  .muted-line { font-size:.9rem; color:#6c757d; }
+  .field-group { margin-bottom:.75rem; }
+  .field-group .form-label { font-weight:600; font-size:.9rem; margin-bottom:.3rem; }
 </style>
 {% endblock %}
 
@@ -38,83 +35,90 @@
         <h4 class="mb-0 page-title">
           <i class="fa fa-plus-circle me-2"></i> Adicionar Serviço à OS #{{ ordem.numero }}
         </h4>
-        <!-- Voltar (mobile) -->
         <a href="{% url 'ver_ordem_servico' ordem.id %}" class="btn btn-outline-secondary d-md-none">
           <i class="fa fa-arrow-left"></i> Voltar
         </a>
       </div>
-
-      <!-- Local e Contrato -->
       <div class="text-muted small mt-1 d-flex flex-wrap gap-3">
         <span>Local: {{ ordem.local.nome }}</span>
         <span>Contrato: {{ ordem.contrato.numero }}</span>
       </div>
     </div>
 
-    <!-- Formulário -->
+    <!-- Formulário (um serviço por vez) -->
     <form method="post" class="card card-body shadow-sm">
       {% csrf_token %}
       {{ formset.management_form }}
 
-       
-      {% with f=formset.forms.0|default:formset.empty_form %}
-
-        
+      {% with f=formset.forms.0 %}
         {% if formset.non_form_errors %}
           <div class="alert alert-danger mb-3">{{ formset.non_form_errors }}</div>
         {% endif %}
 
         <div class="row g-3">
 
- 
-  {% if f.descricao %}
-    <div class="col-12">
-      <label class="form-label" for="{{ f.descricao.id_for_label }}">{{ f.descricao.label }}</label>
-      <textarea name="{{ f.descricao.html_name }}" id="{{ f.descricao.id_for_label }}" rows="3" class="form-control">{% if f.descricao.value %}{{ f.descricao.value }}{% endif %}</textarea>
-      {% if f.descricao.errors %}<div class="text-danger small mt-1">{{ f.descricao.errors }}</div>{% endif %}
-    </div>
-  {% endif %}
+          <!-- Descrição -->
+          <div class="col-12 field-group">
+            <label class="form-label" for="{{ f.descricao.id_for_label }}">{{ f.descricao.label }}</label>
+            {{ f.descricao }}
+            {% if f.descricao.errors %}<div class="text-danger small mt-1">{{ f.descricao.errors }}</div>{% endif %}
+          </div>
 
-   
-  <div class="col-12 col-md-6">
-    {% if f.situacao %}
-      <label class="form-label" for="{{ f.situacao.id_for_label }}">{{ f.situacao.label }}</label>
-      {{ f.situacao }}
-      {% if f.situacao.errors %}<div class="text-danger small mt-1">{{ f.situacao.errors }}</div>{% endif %}
-    {% endif %}
-  </div>
-  <div class="col-12 col-md-6">
-    {% if f.quantidade %}
-      <label class="form-label" for="{{ f.quantidade.id_for_label }}">{{ f.quantidade.label }}</label>
-      <input type="text" name="{{ f.quantidade.html_name }}" id="{{ f.quantidade.id_for_label }}" 
-             class="form-control" value="{{ f.quantidade.value|default_if_none:'' }}">
-      {% if f.quantidade.errors %}<div class="text-danger small mt-1">{{ f.quantidade.errors }}</div>{% endif %}
-    {% endif %}
-  </div>
+          <!-- Situação -->
+          <div class="col-12 col-md-6 field-group">
+            <label class="form-label" for="{{ f.situacao.id_for_label }}">{{ f.situacao.label }}</label>
+            {{ f.situacao }}
+            {% if f.situacao.errors %}<div class="text-danger small mt-1">{{ f.situacao.errors }}</div>{% endif %}
+          </div>
 
-   
-  {% for field in f.visible_fields %}
-    {% if field.name not in 'descricao observacao quantidade situacao' %}
-      <div class="col-12 col-md-6">
-        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-        {{ field }}
-        {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors }}</div>{% endif %}
-      </div>
-    {% endif %}
-  {% endfor %}
+          <!-- Quantidade (texto com parágrafos) -->
+          <div class="col-12 col-md-6 field-group">
+            <label class="form-label" for="{{ f.quantidade.id_for_label }}">{{ f.quantidade.label }}</label>
+            {{ f.quantidade }}
+            {% if f.quantidade.errors %}<div class="text-danger small mt-1">{{ f.quantidade.errors }}</div>{% endif %}
+          </div>
 
-  
-  {% if f.observacao %}
-    <div class="col-12">
-      <label class="form-label" for="{{ f.observacao.id_for_label }}">{{ f.observacao.label }}</label>
-      <input type="text" name="{{ f.observacao.html_name }}" id="{{ f.observacao.id_for_label }}" 
-             class="form-control" value="{{ f.observacao.value|default_if_none:'' }}">
-      {% if f.observacao.errors %}<div class="text-danger small mt-1">{{ f.observacao.errors }}</div>{% endif %}
-    </div>
-  {% endif %}
+          <!-- Categoria -->
+          <div class="col-12 col-md-6 field-group">
+            <label class="form-label" for="{{ f.categoria.id_for_label }}">{{ f.categoria.label }}</label>
+            {{ f.categoria }}
+            {% if f.categoria.errors %}<div class="text-danger small mt-1">{{ f.categoria.errors }}</div>{% endif %}
+          </div>
 
-</div>
+          <!-- Prazo de Entrega -->
+          <div class="col-12 col-md-6 field-group">
+            <label class="form-label" for="{{ f.prazo_entrega.id_for_label }}">{{ f.prazo_entrega.label }}</label>
+            {{ f.prazo_entrega }}
+            {% if f.prazo_entrega.errors %}<div class="text-danger small mt-1">{{ f.prazo_entrega.errors }}</div>{% endif %}
+          </div>
 
+          <!-- Data de Finalização (visível só quando Situação = Finalizado) -->
+          <div class="col-12 col-md-6 field-group" id="grp-data-finalizacao" style="display:none;">
+            <label class="form-label" for="{{ f.data_finalizacao.id_for_label }}">{{ f.data_finalizacao.label }}</label>
+            {{ f.data_finalizacao }}
+            {% if f.data_finalizacao.errors %}<div class="text-danger small mt-1">{{ f.data_finalizacao.errors }}</div>{% endif %}
+          </div>
+
+          <!-- Observação -->
+          <div class="col-12 field-group">
+            <label class="form-label" for="{{ f.observacao.id_for_label }}">{{ f.observacao.label }}</label>
+            {{ f.observacao }}
+            {% if f.observacao.errors %}<div class="text-danger small mt-1">{{ f.observacao.errors }}</div>{% endif %}
+          </div>
+
+          <!-- Urgente -->
+          <div class="col-12 col-md-6 d-flex align-items-center gap-2 field-group">
+            <div class="form-check form-switch">
+              {{ f.urgente }}
+              <label class="form-check-label" for="{{ f.urgente.id_for_label }}">Urgente</label>
+            </div>
+            {% if f.urgente.errors %}<div class="text-danger small mt-1">{{ f.urgente.errors }}</div>{% endif %}
+          </div>
+
+          {# Campo oculto de ID do form (se existir) #}
+          {% if f.id %}{{ f.id }}{% endif %}
+
+        </div>
       {% endwith %}
 
       <div class="mt-4 d-flex flex-column flex-md-row justify-content-end gap-2">
@@ -133,14 +137,47 @@
 
 {% block extra_scripts %}
 <script>
-  (function() {
-    document.addEventListener("DOMContentLoaded", function(){
-      // evita overflow de algum componente fora do BootStrap
-      document.body.style.overflowX = "hidden";
-      toggleDataTermino();
-      const situacao = document.getElementById("id_situacao");
-      if (situacao) situacao.addEventListener("change", toggleDataTermino);
-    });
-  })();
+(function() {
+  function toggleDataFinalizacao(forceInit = false) {
+    const grupo = document.getElementById('grp-data-finalizacao');
+    const select = document.getElementById('{{ formset.forms.0.situacao.id_for_label }}');
+    if (!grupo || !select) return;
+
+    const val = (select.value || '').toLowerCase();
+
+    if (forceInit) {
+      // inicia oculto SEM depender do valor atual
+      grupo.style.display = 'none';
+      return;
+    }
+
+    if (val === 'finalizado') {
+      grupo.style.display = '';
+    } else {
+      grupo.style.display = 'none';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    // evita overflow lateral
+    document.body.style.overflowX = 'hidden';
+
+    // começa oculto sempre que carregar
+    toggleDataFinalizacao(true);
+
+    // aplica a lógica ao mudar a situação
+    const select = document.getElementById('{{ formset.forms.0.situacao.id_for_label }}');
+    if (select) {
+      select.addEventListener('change', function () {
+        toggleDataFinalizacao(false);
+      });
+
+      // Caso já venha como "finalizado" (ex: reenvio com erros), ajusta:
+      if ((select.value || '').toLowerCase() === 'finalizado') {
+        document.getElementById('grp-data-finalizacao').style.display = '';
+      }
+    }
+  });
+})();
 </script>
 {% endblock %}

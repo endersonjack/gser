@@ -286,8 +286,9 @@
                     <th>Descrição</th>
                     <th>Categoria</th>
                     <th>Situação</th>
-                    <th>Quantidade</th>
-                    <th>Observação</th>
+                    <th class="text-center">Prazo</th>
+                    <th class="text-center">Finalização</th>
+                    
                     <th class="text-center" style="width: 90px;">Ações</th>
                   </tr>
                 </thead>
@@ -304,8 +305,21 @@
                     <td class="text-center align-middle" data-servico-situacao="{{ servico.situacao }}" title="{{ servico.get_situacao_display }}">
                       {{ servico.get_situacao_display }}
                     </td>
-                    <td title="{{ servico.quantidade }}">{{ servico.quantidade }}</td>
-                    <td title="{{ servico.observacao }}">{{ servico.observacao }}</td>
+                   <td class="text-center">
+                        {% if servico.prazo_entrega %}
+                          {{ servico.prazo_entrega|date:"d/m/Y" }}
+                        {% else %}
+                          &mdash;
+                        {% endif %}
+                      </td>
+                      <td class="text-center">
+                        {% if servico.data_finalizacao %}
+                          {{ servico.data_finalizacao|date:"d/m/Y" }}
+                        {% else %}
+                          &mdash;
+                        {% endif %}
+                      </td>
+
                     <td class="text-center">
                       <a href="{% url 'imprimir_servico' ordem.id servico.id %}" class="btn btn-outline-secondary btn-sm" title="Imprimir este serviço" target="_blank" rel="noopener">
                         <i class="fa fa-print"></i>

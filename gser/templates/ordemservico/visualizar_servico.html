@@ -51,6 +51,15 @@
 </script>
 {% endblock %}
 
+{% block voltar_botao %}
+    <a href="{% url 'ver_ordem_servico' ordem.id %}"
+       class="py-2 px-3 text-white text-decoration-none d-none d-md-block"
+       title="Voltar para OS {{ ordem.numero }}">
+      <i class="fa fa-arrow-left me-2"></i> Voltar OS
+    </a>
+   
+{% endblock %}
+
 {% block content %}
 <div class="container py-4">
 
@@ -78,29 +87,40 @@
   </form>
 
   <!-- Ações (dropdown) -->
-  <div class="dropdown">
-    <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-      <i class="fa fa-cog"></i> Ações
-    </button>
-    <ul class="dropdown-menu dropdown-menu-end">
-      <li>
-        <a class="dropdown-item" href="{% url 'editar_servico' ordem.id servico.id %}">
-          <i class="fa fa-pen me-2"></i> Editar
-        </a>
-      </li>
-      <li>
-        <a class="dropdown-item" href="{% url 'imprimir_servico' ordem.id servico.id %}" target="_blank" rel="noopener">
-          <i class="fa fa-print me-2"></i> Imprimir
-        </a>
-      </li>
-    </ul>
-  </div>
+<div class="dropdown">
+  <button class="btn btn-sm btn-light dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+    <i class="fa fa-cog"></i> Ações
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li>
+      <a class="dropdown-item" href="{% url 'editar_servico' ordem.id servico.id %}">
+        <i class="fa fa-pen me-2"></i> Editar
+      </a>
+    </li>
+    <li>
+      <a class="dropdown-item" href="{% url 'imprimir_servico' ordem.id servico.id %}" target="_blank" rel="noopener">
+        <i class="fa fa-print me-2"></i> Imprimir
+      </a>
+    </li>
 
-  <!-- Voltar -->
-  <a href="{% url 'ver_ordem_servico' ordem.id %}" class="btn btn-sm btn-outline-secondary">
-    <i class="fa fa-arrow-left"></i> Voltar à OS
-  </a>
+    <li><hr class="dropdown-divider"></li>
+
+    <!-- EXCLUIR (POST + confirmação) -->
+    <li class="px-2">
+      <form method="post" action="{% url 'excluir_servico' ordem.id servico.id %}" id="form-excluir-servico">
+        {% csrf_token %}
+        <button type="submit" class="dropdown-item text-danger d-flex align-items-center gap-2"
+                onclick="return confirmarExcluirServico(event)">
+          <i class="fa fa-trash"></i>
+          <span>Excluir</span>
+        </button>
+      </form>
+    </li>
+  </ul>
 </div>
+
+
+  
 
       </div>
     </div>
@@ -288,6 +308,13 @@
 </div>
 {% block extra_scripts %}
 <script>
+  function confirmarExcluirServico(e) {
+  if (!confirm('Tem certeza que deseja excluir este serviço? Essa ação não pode ser desfeita.')) {
+    e.preventDefault();
+    return false;
+  }
+  return true;
+}
 document.addEventListener('DOMContentLoaded', function () {
   const sw = document.getElementById('switch-urgente-serv');
   const hidden = document.getElementById('urgente-hidden-serv');
@@ -299,6 +326,9 @@ document.addEventListener('DOMContentLoaded', function () {
     hidden.value = sw.checked ? '1' : '0';
     form.submit(); // 🔁 recarrega a página via POST + redirect da view
   });
+
+
+
 });
 </script>
 

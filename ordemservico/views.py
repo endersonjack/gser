@@ -200,7 +200,7 @@ def adicionar_servicos_ordem(request, ordem_id):
         if formset.is_valid():
             formset.save()
             sincronizar_situacao_ordem(ordem)
-            messages.success(request, "Serviço salvo com sucesso.")
+            # messages.success(request, "Serviço salvo com sucesso.")
 
             if 'encerrar' in request.POST:
                 return redirect('dashboard_contrato', id=ordem.contrato.id)
@@ -266,15 +266,14 @@ def visualizar_servico(request, ordem_id, servico_id):
     })
 
 
+@require_POST
+@login_required
 def excluir_servico(request, ordem_id, servico_id):
     servico = get_object_or_404(Servico, id=servico_id, ordem__id=ordem_id)
-    if request.method == 'POST':
-        servico.delete()
-        # Redireciona para a visualização da ordem, ou onde preferir
-        return redirect('visualizar_ordem', ordem_id=ordem_id)
-    # Se quiser, você pode renderizar uma página de confirmação;  
-    # mas como já há confirmação em JS, apenas redirecione:
-    return redirect('ordemservico/visualizar_servico', ordem_id=ordem_id, servico_id=servico_id)
+    ordem = servico.ordem  # pega a OS antes de deletar
+    servico.delete()
+    messages.success(request, "Serviço excluído com sucesso.")
+    return redirect('ver_ordem_servico', ordem_id=ordem.id)
 
 
 

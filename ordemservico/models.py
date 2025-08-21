@@ -81,17 +81,18 @@ class Servico(models.Model):
     urgente = models.BooleanField(default=False, verbose_name="Urgente")
 
     def save(self, *args, **kwargs):
-        # descobrir valor anterior de 'urgente'
+        # Se não estiver finalizado, não guarda data_finalizacao
+        if self.situacao != 'finalizado':
+            self.data_finalizacao = None
+
         was_urgent = None
         if self.pk:
             was_urgent = type(self).objects.filter(pk=self.pk).values_list('urgente', flat=True).first()
 
         super().save(*args, **kwargs)
 
-        # Se o serviço acabou de virar urgente, garanta que a OS esteja urgente
         if self.urgente and (was_urgent is False or was_urgent is None):
             if not self.ordem.urgente:
-                # update direto evita recursão do save() da OS (e é mais rápido)
                 OrdemServico.objects.filter(pk=self.ordem_id).update(urgente=True)
 
     def __str__(self):
