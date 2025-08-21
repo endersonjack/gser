@@ -16,10 +16,9 @@ from weasyprint import HTML
 from datetime import date
 from configuracoes.models import Empresa
 from diariodeobras.models import Orgao
-
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-
+from django.utils import timezone
 
 
 
@@ -70,12 +69,26 @@ def criar_ordem_servico(request):
     if request.method == 'POST':
         form = OrdemServicoForm(request.POST)
         if form.is_valid():
-            ordem = form.save()
+            # Garante data_solicitacao mesmo se o navegador não enviar
+            ordem = form.save(commit=False)
+            if not ordem.data_solicitacao:
+                ordem.data_solicitacao = timezone.localdate()
+            ordem.save()
+
             sincronizar_situacao_ordem(ordem)
             messages.success(request, "Ordem de serviço criada com sucesso.")
             return redirect('ver_ordem_servico', ordem.id)
     else:
-        form = OrdemServicoForm(initial={'situacao': 'nao_iniciado'})
+        initial = {
+            'situacao': 'nao_iniciado',
+            'data_solicitacao': timezone.localdate(),  # <- hoje (YYYY-MM-DD) para input date
+        }
+        # Se tiver contrato na sessão ou na URL, pré-seleciona
+        contrato_id = request.session.get('contrato_id') or request.GET.get('contrato')
+        if contrato_id:
+            initial['contrato'] = contrato_id
+
+        form = OrdemServicoForm(initial=initial)
 
     return render(request, 'ordemservico/criar_ordem_servico.html', {
         'form': form,

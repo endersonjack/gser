@@ -67,14 +67,7 @@ urlpatterns = [
     path('ordem/<int:ordem_id>/servico/<int:servico_id>/imprimir/pdf/', imprimir_servico_pdf, name='imprimir_servico_pdf'),
     path('ordem/<int:ordem_id>/diario/', diario_de_obras, name='diario_de_obras'),
 
-
-
-
-
-    
     path('configuracoes/', index, name='configuracoes'),
-
-
 
 ]
 

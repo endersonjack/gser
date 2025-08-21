@@ -1,6 +1,7 @@
 from django.db import models
 from contratos.models import Contrato
 from local.models import Local
+from django.utils.timezone import now
 
 
 class Categoria(models.Model):
@@ -24,6 +25,7 @@ class OrdemServico(models.Model):
     contrato = models.ForeignKey(Contrato, on_delete=models.CASCADE, related_name='ordens')
     numero = models.CharField(max_length=50)
     local = models.ForeignKey(Local, on_delete=models.SET_NULL, null=True, blank=True)  
+    data_solicitacao = models.DateField("Data da Solicitação", default=now)
     data_inicio = models.DateField()
     data_termino = models.DateField(null=True, blank=True)
     data_paralisado = models.DateField(null=True, blank=True)
@@ -74,8 +76,8 @@ class Servico(models.Model):
     quantidade = models.TextField(null=True, blank=True)
     categoria = models.ForeignKey(Categoria, on_delete=models.SET_NULL, null=True, blank=True)
     observacao = models.TextField(null=True, blank=True)
-
-    # Campo simples para marcar urgência no serviço
+    prazo_entrega = models.DateField("Prazo de Entrega", null=True, blank=True)
+    data_finalizacao = models.DateField("Data de Finalização", null=True, blank=True)
     urgente = models.BooleanField(default=False, verbose_name="Urgente")
 
     def save(self, *args, **kwargs):

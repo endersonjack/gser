@@ -8,21 +8,52 @@
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
 <style>
+  body {
+    margin: 0;
+    padding: 0;
+    padding-bottom: 70px; /* espaço para menu inferior */
+  }
+
+ .main-content {
+    flex: 1;
+    overflow-x: hidden;
+    padding: 20px;
+    background: #f8f9fa;
+  }
+
+
+    /* Corrige visual do Select2 para seguir padrão form-select */
+  .select2-container--bootstrap-5 .select2-selection {
+    border: 1px solid #ced4da !important;
+    border-radius: 0.375rem !important;
+    min-height: calc(2.25rem + 2px) !important;
+    padding: 0.375rem 0.75rem !important;
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
+  }
+  .select2-container--bootstrap-5 .select2-selection__rendered {
+    padding-left: 0 !important;
+  }
+
+
+  /* sidebar vem do include e já tem estilos próprios;
+     aqui só garantimos o comportamento responsivo */
+  @media (max-width: 768px) {
+    .wrapper { flex-direction: column; height: auto; }
+    .sidebar { display: none !important; }
+    .main-content { padding: 15px; }
+  }
+
   .card { margin-bottom: 1.5rem; }
 
   /* Switch maior para URGENTE */
   .form-switch.form-switch-lg .form-check-input {
-    width: 3.25em;
-    height: 1.75em;
+    width: 3.25em; height: 1.75em;
   }
   .form-switch.form-switch-lg .form-check-input:checked {
-    background-color: #dc3545; /* vermelho */
-    border-color: #dc3545;
+    background-color: #dc3545; border-color: #dc3545;
   }
-  .form-switch.form-switch-lg .form-check-label {
-    font-weight: 700;
-    margin-left: .5rem;
-  }
+  .form-switch.form-switch-lg .form-check-label { font-weight: 700; margin-left: .5rem; }
 
   /* Banner URGENTE */
   .urgente-banner {
@@ -43,126 +74,159 @@
 
   /* No mobile, botões viram coluna */
   @media (max-width: 768px) {
-    .btn-group-mobile {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-top: 20px;
-    }
-    .btn-group-mobile button,
-    .btn-group-mobile a { width: 100%; }
+    .btn-group-mobile { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+    .btn-group-mobile button, .btn-group-mobile a { width: 100%; }
+  }
+
+  /* estética suave nos títulos de seção */
+  .section-title {
+    font-size: .95rem;
+    letter-spacing: .02em;
+    color: #6c757d;
+    text-transform: uppercase;
+    margin-bottom: .5rem;
   }
 </style>
 {% endblock %}
 
-{% block content %}
-<div class="container py-4">
-
-  {% if messages %}
-    {% for message in messages %}
-      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-        {{ message }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-      </div>
-    {% endfor %}
-  {% endif %}
-
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="mb-0"><i class="fa fa-plus-circle me-2"></i> Nova Ordem de Serviço</h4>
-    <a href="{% url 'dashboard_contrato' request.session.contrato_id %}" class="btn btn-outline-secondary d-none d-md-inline">
-      <i class="fa fa-arrow-left"></i> Voltar
+{% block voltar_botao %}
+  {% if contrato %}
+    <a href="{% url 'dashboard_contrato' contrato.id %}"
+       class="d-none d-md-block py-2 px-3 text-white text-decoration-none"
+       title="Voltar ao Painel do Contrato {{ contrato.numero }}">
+      <i class="fa fa-arrow-left me-2"></i> Voltar
     </a>
+  {% else %}
+    <a href="{% url 'dashboard_geral' %}"
+       class="d-none d-md-block py-2 px-3 text-white text-decoration-none"
+       title="Voltar ao Painel Geral">
+      <i class="fa fa-arrow-left me-2"></i> Voltar
+    </a>
+  {% endif %}
+{% endblock %}
+
+
+{% block content %}
+<div class="wrapper flex-column flex-md-row">
+
+ 
+
+  <div class="main-content order-1 order-md-2">
+    <div class="container-fluid py-4">
+
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0 d-flex align-items-center gap-2">
+          <i class="fa fa-plus-circle"></i> Nova Ordem de Serviço
+        </h4>
+         
+      </div>
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post" class="card card-body shadow-sm" id="form-os">
+        {% csrf_token %}
+
+        <!-- Linha do switch URGENTE + banner -->
+        <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3 mb-3" id="linha-urgente">
+          <div class="form-check form-switch form-switch-lg">
+            {{ form.urgente|add_class:"form-check-input"|attr:"role:switch"|attr:"id:id_urgente" }}
+            <label class="form-check-label text-danger" for="id_urgente">
+              <i class="fa fa-bolt me-1"></i> Marcar como URGENTE
+            </label>
+          </div>
+
+          <div class="urgente-banner rounded" id="urgente-banner">
+            <i class="fa fa-triangle-exclamation"></i>
+            <span>Ordem de Serviço URGENTE — prioridade máxima</span>
+          </div>
+        </div>
+
+        <!-- Card: Dados da OS -->
+        <div class="section-title">Dados da Ordem</div>
+        <div class="card shadow-sm mb-4">
+          <div class="card-body row g-3">
+            <div class="col-md-3">
+  <label for="{{ form.data_solicitacao.id_for_label }}" class="form-label">Data da Solicitação</label>
+  {{ form.data_solicitacao }} {# já vem com class e value corretos #}
+</div>
+
+
+            <div class="col-md-3">
+              <label for="id_numero" class="form-label">Número da OS</label>
+              {{ form.numero|add_class:"form-control" }}
+            </div>
+
+            <div class="col-md-6">
+              <label for="id_contrato" class="form-label">Contrato</label>
+              {{ form.contrato|add_class:"form-select" }}
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title">Local e Situação</div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="id_local" class="form-label">Local</label>
+            {{ form.local|add_class:"form-select select2" }}
+          </div>
+
+          <div class="col-md-3 mb-3">
+            <label for="id_data_inicio" class="form-label">Data Início</label>
+            {{ form.data_inicio|add_class:"form-control" }}
+          </div>
+
+          <div class="col-md-3 mb-3">
+            <label for="id_situacao" class="form-label">Situação</label>
+            {{ form.situacao|add_class:"form-select" }}
+          </div>
+
+          <div class="col-md-4 mb-3" id="grupo-data-termino" style="display:none;">
+            <label for="id_data_termino" class="form-label">Data Término</label>
+            {{ form.data_termino|add_class:"form-control" }}
+          </div>
+
+          <div class="col-md-4 mb-3" id="grupo-data-paralisado" style="display:none;">
+            <label for="id_data_paralisado" class="form-label">Data Paralisado</label>
+            {{ form.data_paralisado|add_class:"form-control" }}
+          </div>
+
+          <div class="col-md-4 mb-3" id="grupo-motivo" style="display:none;">
+            <label for="id_motivo_pendente_paralisado" class="form-label">Motivo Pendente / Paralisado</label>
+            {{ form.motivo_pendente_paralisado|add_class:"form-control" }}
+          </div>
+
+          <div class="col-12 mb-3">
+            <label for="id_observacao" class="form-label">Observações</label>
+            {{ form.observacao|add_class:"form-control" }}
+          </div>
+        </div>
+
+        {% if form.errors %}
+          <div class="alert alert-danger">
+            <strong>Verifique os campos:</strong>
+            <ul class="mb-0">
+              {% for field, errors in form.errors.items %}
+                <li><strong>{{ field|capfirst }}:</strong> {{ errors|striptags }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+
+        <div class="btn-group-mobile d-md-flex justify-content-end gap-2">
+          <button type="submit" class="btn btn-primary">
+            <i class="fa fa-save"></i> Salvar
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
-
-  <form method="post" class="card card-body shadow-sm" id="form-os">
-    {% csrf_token %}
-
-    <!-- Linha do switch URGENTE + banner -->
-    <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between gap-3 mb-3" id="linha-urgente">
-      <div class="form-check form-switch form-switch-lg">
-        {# Checkbox de URGENTE (usa o campo do form) #}
-        {{ form.urgente|add_class:"form-check-input"|attr:"role:switch"|attr:"id:id_urgente" }}
-        <label class="form-check-label text-danger" for="id_urgente">
-          <i class="fa fa-bolt me-1"></i> Marcar como URGENTE
-        </label>
-      </div>
-
-      <div class="urgente-banner rounded" id="urgente-banner">
-        <i class="fa fa-triangle-exclamation"></i>
-        <span>Ordem de Serviço URGENTE — prioridade máxima</span>
-      </div>
-    </div>
-
-    <!-- Card: Dados da OS -->
-    <div class="card shadow-sm mb-4">
-      <div class="card-body row g-3">
-        <div class="col-md-4">
-          <label for="id_numero" class="form-label">Número da OS</label>
-          {{ form.numero|add_class:"form-control" }}
-        </div>
-
-        <div class="col-md-8">
-          <label for="id_contrato" class="form-label">Contrato</label>
-          {{ form.contrato|add_class:"form-select" }}
-        </div>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="col-md-6 mb-3">
-        <label for="id_local" class="form-label">Local</label>
-        {{ form.local|add_class:"form-select select2" }}
-      </div>
-
-      <div class="col-md-6 mb-3">
-        <label for="id_data_inicio" class="form-label">Data Início</label>
-        {{ form.data_inicio|add_class:"form-control" }}
-      </div>
-
-      <div class="col-md-6 mb-3">
-        <label for="id_situacao" class="form-label">Situação</label>
-        {{ form.situacao|add_class:"form-select" }}
-      </div>
-
-      <div class="col-md-6 mb-3" id="grupo-data-termino" style="display:none;">
-        <label for="id_data_termino" class="form-label">Data Término</label>
-        {{ form.data_termino|add_class:"form-control" }}
-      </div>
-
-      <div class="col-md-6 mb-3" id="grupo-data-paralisado" style="display:none;">
-        <label for="id_data_paralisado" class="form-label">Data Paralisado</label>
-        {{ form.data_paralisado|add_class:"form-control" }}
-      </div>
-
-      <div class="col-md-6 mb-3" id="grupo-motivo" style="display:none;">
-        <label for="id_motivo_pendente_paralisado" class="form-label">Motivo Pendente / Paralisado</label>
-        {{ form.motivo_pendente_paralisado|add_class:"form-control" }}
-      </div>
-
-      <div class="col-12 mb-3">
-        <label for="id_observacao" class="form-label">Observações</label>
-        {{ form.observacao|add_class:"form-control" }}
-      </div>
-    </div>
-
-    {# Erros do form #}
-    {% if form.errors %}
-      <div class="alert alert-danger">
-        <strong>Verifique os campos:</strong>
-        <ul class="mb-0">
-          {% for field, errors in form.errors.items %}
-            <li><strong>{{ field|capfirst }}:</strong> {{ errors|striptags }}</li>
-          {% endfor %}
-        </ul>
-      </div>
-    {% endif %}
-
-    <div class="btn-group-mobile d-md-flex justify-content-end gap-2">
-      <button type="submit" class="btn btn-primary">
-        <i class="fa fa-save"></i> Salvar
-      </button>
-    </div>
-  </form>
 </div>
 {% endblock %}
 
@@ -179,7 +243,6 @@
       placeholder: 'Selecione uma opção',
       allowClear: true
     });
-
     // Exibir/esconder campos por situação
     function atualizarCampos() {
       const situacao = $('#id_situacao').val();
@@ -200,12 +263,11 @@
     function atualizarUrgente() {
       const ativo = $('#id_urgente').is(':checked');
       $('#form-os').toggleClass('urgente-ativo', ativo);
-      // Acessibilidade: título do banner
       $('#urgente-banner').attr('aria-hidden', !ativo);
     }
 
     $('#id_urgente').on('change', atualizarUrgente);
-    atualizarUrgente(); // estado inicial (caso venha marcado no form)
+    atualizarUrgente(); // estado inicial
   });
 </script>
 {% endblock %}
