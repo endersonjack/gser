@@ -94,7 +94,13 @@
 
    
   {% for field in f.visible_fields %}
-    {% if field.name not in 'descricao observacao quantidade situacao' %}
+    {% if field.name == 'data_finalizacao' %}
+      <div class="col-12 col-md-6" id="data_finalizacao_div" style="display:none;">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<div class="text-danger small mt-1">{{ field.errors }}</div>{% endif %}
+      </div>
+    {% elif field.name not in 'descricao observacao quantidade situacao' %}
       <div class="col-12 col-md-6">
         <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
         {{ field }}
@@ -132,15 +138,34 @@
 {% endblock %}
 
 {% block extra_scripts %}
+{% with f=formset.forms.0|default:formset.empty_form %}
 <script>
-  (function() {
-    document.addEventListener("DOMContentLoaded", function(){
-      // evita overflow de algum componente fora do BootStrap
-      document.body.style.overflowX = "hidden";
-      toggleDataTermino();
-      const situacao = document.getElementById("id_situacao");
-      if (situacao) situacao.addEventListener("change", toggleDataTermino);
-    });
-  })();
+  document.addEventListener("DOMContentLoaded", function(){
+    // evita overflow de algum componente fora do BootStrap
+    document.body.style.overflowX = "hidden";
+
+    const situacao = document.getElementById("{{ f.situacao.id_for_label }}");
+    const dataFinalizacaoDiv = document.getElementById("data_finalizacao_div");
+    const dataFinalizacaoInput = document.getElementById("{{ f.data_finalizacao.id_for_label }}");
+
+    function toggleDataFinalizacao() {
+      if (situacao.value === 'finalizado') {
+        dataFinalizacaoDiv.style.display = 'block';
+        if (dataFinalizacaoInput) dataFinalizacaoInput.required = true;
+      } else {
+        dataFinalizacaoDiv.style.display = 'none';
+        if (dataFinalizacaoInput) {
+          dataFinalizacaoInput.required = false;
+          dataFinalizacaoInput.value = '';
+        }
+      }
+    }
+
+    if (situacao && dataFinalizacaoDiv) {
+      situacao.addEventListener('change', toggleDataFinalizacao);
+      toggleDataFinalizacao();
+    }
+  });
 </script>
+{% endwith %}
 {% endblock %}
