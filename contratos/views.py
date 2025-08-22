@@ -177,6 +177,8 @@ def mapa_ordens_contrato(request, id):
         'marcadores': json.dumps(locais_com_coords)
     })
 
+# contratos/views.py
+
 @login_required
 def mapa_ordens_geral(request):
     ordens = OrdemServico.objects.select_related('local', 'contrato')
@@ -194,7 +196,8 @@ def mapa_ordens_geral(request):
                 'lng': float(local.longitude),
                 'situacao': ordem.get_situacao_display(),
                 'contrato': ordem.contrato.numero,
-                'url': reverse('ver_ordem_servico', args=[ordem.id])
+                'url': reverse('ver_ordem_servico', args=[ordem.id]),
+                'urgente': bool(getattr(ordem, 'urgente', False)),   # <<< ADICIONE ESTA LINHA
             })
 
     return render(request, 'contratos/mapa_ordens_geral.html', {
@@ -202,6 +205,9 @@ def mapa_ordens_geral(request):
         'contratos': contratos,
     })
 
+
+
+# contratos/views.py
 
 from django.http import JsonResponse
 
@@ -221,7 +227,8 @@ def api_mapa_ordens_geral(request):
                 'lng': float(local.longitude),
                 'situacao': ordem.get_situacao_display(),
                 'contrato': ordem.contrato.numero,
-                'url': reverse('ver_ordem_servico', args=[ordem.id])
+                'url': reverse('ver_ordem_servico', args=[ordem.id]),
+                'urgente': bool(getattr(ordem, 'urgente', False)),   # <<< ADICIONE ESTA LINHA
             })
 
     return JsonResponse({'marcadores': locais_com_coords})

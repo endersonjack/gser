@@ -1,4 +1,4 @@
-{% extends "mobile_menu_base.html" %}
+{% extends "base_sem_sidebar.html" %}
 {% load static %}
 
 {% block title %}Mapa de Ordens Gerais{% endblock %}
@@ -6,6 +6,8 @@
 {% block extra_head %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet.awesome-markers@2.0.5/dist/leaflet.awesome-markers.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-pulse-icon@0.1.0/dist/L.Icon.Pulse.css" />
 
 <style>
   .wrapper {
@@ -17,85 +19,49 @@
     overflow-x: hidden;
     margin: 0 auto;
   }
-
   .sidebar {
-    width: 260px;
-    background-color: #343a40;
-    color: #fff;
-    padding: 20px 15px;
-    flex-shrink: 0;
-    max-height: 100vh;
-    overflow-y: auto;
+    width: 260px; background-color: #343a40; color: #fff;
+    padding: 20px 15px; flex-shrink: 0; max-height: 100vh; overflow-y: auto;
+  }
+  .sidebar a { display:block; color:#fff; padding:10px 15px; text-decoration:none; border-radius:4px; margin-bottom:8px; }
+  .sidebar a:hover, .sidebar a.active { background-color:#007bff; }
+
+  .main-content { flex:1; padding:20px; overflow-x:hidden; }
+  #map { width:100%; height:70vh; border-radius:10px; }
+
+  @media (max-width:768px){
+    .wrapper{ flex-direction:column; height:auto; }
+    .sidebar{ display:none!important; }
+    .main-content{ max-width:100%!important; padding:15px; }
+  }
+  @media (min-width:769px){ .main-content{ max-width:calc(100vw - 260px); } }
+
+  #mapa-container{ position:relative; }
+  #map.map-normal{ height:70vh; border-radius:10px; width:100%; }
+  #map.map-fullscreen{
+    position:fixed; top:0; left:0; width:100vw!important; height:100vh!important; z-index:1050; border-radius:0;
   }
 
-  .sidebar a {
-    display: block;
-    color: #fff;
-    padding: 10px 15px;
-    text-decoration: none;
-    border-radius: 4px;
-    margin-bottom: 8px;
+  /* Fallback de pulso (quando o plugin não está disponível) */
+  .urgent-fallback { position: relative; }
+  .urgent-fallback::after{
+    content:""; position:absolute; top:50%; left:50%;
+    width:36px; height:36px; margin-left:-18px; margin-top:-44px;
+    border-radius:50%; border:2px solid rgba(220,53,69,.6);
+    animation: urgentPulse 1.5s ease-out infinite; pointer-events:none;
+  }
+  @keyframes urgentPulse{
+    0%{ transform:scale(.8); opacity:.9; }
+    70%{ transform:scale(1.4); opacity:0; }
+    100%{ transform:scale(1.4); opacity:0; }
   }
 
-  .sidebar a:hover,
-  .sidebar a.active {
-    background-color: #007bff;
-  }
-
-  .main-content {
-    flex: 1;
-    padding: 20px;
-    overflow-x: hidden;
-  }
-
-  #map {
-    width: 100%;
-    height: 70vh;
-    border-radius: 10px;
-  }
-
-  @media (max-width: 768px) {
-    .wrapper {
-      flex-direction: column;
-      height: auto;
-    }
-
-    .sidebar {
-      display: none !important;
-    }
-
-    .main-content {
-      max-width: 100% !important;
-      padding: 15px;
-    }
-  }
-
-  @media (min-width: 769px) {
-    .main-content {
-      max-width: calc(100vw - 260px);
-    }
-  }
-
-  #mapa-container {
-  position: relative;
-}
-
-#map.map-normal {
-  height: 70vh;
-  border-radius: 10px;
-  width: 100%;
-}
-
-#map.map-fullscreen {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw !important;
-  height: 100vh !important;
-  z-index: 1050;
-  border-radius: 0;
-}
-
+  /* Legenda opcional */
+  .map-legend{ background:#fff; border:1px solid #ddd; border-radius:8px; padding:8px 10px; font-size:.9rem; box-shadow:0 2px 8px rgba(0,0,0,.08); }
+  .legend-item{ display:flex; align-items:center; gap:6px; }
+  .legend-dot{ width:14px; height:22px; border-radius:3px; background:#46b7f8; display:inline-block; }
+  .legend-dot.urgent{ background:#dc3545; }
+  .legend-dot.nao-iniciado{ background:#585858; }
 </style>
 {% endblock %}
 
@@ -115,158 +81,96 @@
     </a>
     <hr class="bg-light" />
 
-    <!-- filtro por situação e contrato -->
+    <div class="text-white small px-3">
+      <form id="filtrosMapa">
+        <p class="mb-2 fw-bold">Filtrar por Situação:</p>
+        <div class="form-check d-flex align-items-center mb-1">
+          <input class="form-check-input filtro-situacao me-2" type="checkbox" value="Não Iniciado" id="chk-nao-iniciado" checked>
+          <label class="form-check-label text-secondary" for="chk-nao-iniciado"><i class="fa fa-map-marker-alt me-1"></i> Não Iniciado</label>
+        </div>
+        <div class="form-check d-flex align-items-center mb-1">
+          <input class="form-check-input filtro-situacao me-2" type="checkbox" value="Em Andamento" id="chk-em-andamento" checked>
+          <label class="form-check-label text-primary" for="chk-em-andamento"><i class="fa fa-map-marker-alt me-1"></i> Em Andamento</label>
+        </div>
+        <div class="form-check d-flex align-items-center mb-1">
+          <input class="form-check-input filtro-situacao me-2" type="checkbox" value="Pendente" id="chk-pendente">
+          <label class="form-check-label text-warning" for="chk-pendente"><i class="fa fa-map-marker-alt me-1"></i> Pendente / Paralisado</label>
+        </div>
+        <div class="form-check d-flex align-items-center mb-3">
+          <input class="form-check-input filtro-situacao me-2" type="checkbox" value="Finalizado" id="chk-finalizado">
+          <label class="form-check-label text-success" for="chk-finalizado"><i class="fa fa-map-marker-alt me-1"></i> Finalizado</label>
+        </div>
 
-   <div class="text-white small px-3">
-  <form id="filtrosMapa">
-
-   <p class="mb-2 fw-bold">Filtrar por Situação:</p>
-<div class="form-check d-flex align-items-center mb-1">
-  <input class="form-check-input filtro-situacao me-2" type="checkbox" value="Não Iniciado" id="chk-nao-iniciado" checked>
-  <label class="form-check-label text-secondary" for="chk-nao-iniciado">
-    <i class="fa fa-map-marker-alt me-1"></i> Não Iniciado
-  </label>
-</div>
-<div class="form-check d-flex align-items-center mb-1">
-  <input class="form-check-input filtro-situacao me-2" type="checkbox" value="Em Andamento" id="chk-em-andamento" checked>
-  <label class="form-check-label text-primary" for="chk-em-andamento">
-    <i class="fa fa-map-marker-alt me-1"></i> Em Andamento
-  </label>
-</div>
-<div class="form-check d-flex align-items-center mb-1">
-  <input class="form-check-input filtro-situacao me-2" type="checkbox" value="Pendente" id="chk-pendente" >
-  <label class="form-check-label text-warning" for="chk-pendente">
-    <i class="fa fa-map-marker-alt me-1"></i> Pendente / Paralisado
-  </label>
-</div>
-<div class="form-check d-flex align-items-center mb-1">
-  <input class="form-check-input filtro-situacao me-2" type="checkbox" value="Cancelado" id="chk-cancelado" >
-  <label class="form-check-label text-danger" for="chk-cancelado">
-    <i class="fa fa-map-marker-alt me-1"></i> Cancelado
-  </label>
-</div>
-<div class="form-check d-flex align-items-center mb-3">
-  <input class="form-check-input filtro-situacao me-2" type="checkbox" value="Finalizado" id="chk-finalizado" >
-  <label class="form-check-label text-success" for="chk-finalizado">
-    <i class="fa fa-map-marker-alt me-1"></i> Finalizado
-  </label>
-</div>
-
-
-    <p class="mb-2 fw-bold">Filtrar por Contrato:</p>
-    {% for contrato in contratos %}
-      <div class="form-check">
-        <input class="form-check-input filtro-contrato" type="checkbox" value="{{ contrato.numero }}" id="contrato-{{ forloop.counter }}" checked>
-        <label class="form-check-label" for="contrato-{{ forloop.counter }}">{{ contrato.numero }}</label>
-      </div>
-    {% endfor %}
-  </form>
-</div>
-
-
-
-
-
+        <p class="mb-2 fw-bold">Filtrar por Contrato:</p>
+        {% for contrato in contratos %}
+          <div class="form-check">
+            <input class="form-check-input filtro-contrato" type="checkbox" value="{{ contrato.numero }}" id="contrato-{{ forloop.counter }}" checked>
+            <label class="form-check-label" for="contrato-{{ forloop.counter }}">{{ contrato.numero }}</label>
+          </div>
+        {% endfor %}
+      </form>
+    </div>
   </div>
 
-  <!-- Conteúdo principal -->
+  <!-- Conteúdo -->
   <div class="main-content">
- 
-
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
-  <div>
-    <h4 class="mb-1"><i class="fa fa-map-marked-alt me-2"></i> Mapa Geral de Ordens</h4>
-    <p class="text-muted mb-0 small">
-      Visualização de todas as ordens de serviço cadastradas no sistema.
-    </p>
-  </div>
+      <div>
+        <h4 class="mb-1"><i class="fa fa-map-marked-alt me-2"></i> Mapa Geral de Ordens</h4>
+        <p class="text-muted mb-0 small">Visualização de todas as ordens de serviço cadastradas no sistema.</p>
+      </div>
+      <div class="text-end">
+        <span class="badge bg-secondary small">Atualizando em <span id="tempo-restante">30</span>s</span>
+      </div>
+    </div>
 
-  <!-- Contador no canto superior direito -->
-  <div class="text-end">
-    <span class="badge bg-secondary small">Atualizando em <span id="tempo-restante">30</span>s</span>
-  </div>
-</div>
-   <script>
+    <script>
       let segundosRestantes = 30;
-    const contadorSpan = document.getElementById('tempo-restante');
-
-    // Atualiza o contador visível
-    setInterval(() => {
-      segundosRestantes--;
-      if (segundosRestantes <= 0) {
-        segundosRestantes = 30;
+      const contadorSpan = document.getElementById('tempo-restante');
+      setInterval(() => {
+        segundosRestantes--;
+        if (segundosRestantes <= 0) { segundosRestantes = 30; }
+        if (contadorSpan) contadorSpan.textContent = segundosRestantes;
+      }, 1000);
+      function carregarDadosHeader() {
+        fetch("{% url 'api_mapa_ordens_geral' %}")
+          .then(res => res.json())
+          .then(data => {
+            marcadores = data.marcadores;
+            aplicarFiltros();
+            segundosRestantes = 30;
+          })
+          .catch(e => console.error('Falha ao carregar dados:', e));
       }
-      if (contadorSpan) contadorSpan.textContent = segundosRestantes;
-    }, 1000);
-
-    // Recarrega os dados e reinicia o contador
-    function carregarDados() {
-      fetch("{% url 'api_mapa_ordens_geral' %}")
-        .then(res => res.json())
-        .then(data => {
-          marcadores = data.marcadores;
-          aplicarFiltros();
-          segundosRestantes = 30;  // reinicia contagem após atualizar
-        });
-    }
-
     </script>
-
-
 
     <div class="card shadow-sm">
       <div class="card-body">
-       
-        
-          <div id="mapa-container" class="position-relative">
+        <div id="mapa-container" class="position-relative">
           <div id="map" class="map-normal"></div>
-          
-          <!-- Botão para ampliar -->
-          <button id="btn-expandir" class="btn btn-light btn-sm position-absolute top-0 end-0 m-2 d-none d-md-block">
-            <i class="fa fa-expand"></i> Ampliar
-          </button>
 
-          <!-- Botão para fechar -->
-          <button id="btn-fechar" class="btn btn-light btn-sm position-absolute top-0 end-0 m-2 d-none" style="z-index:9999;">
-            <i class="fa fa-times"></i> Fechar
-          </button>
+          <button id="btn-expandir" class="btn btn-light btn-sm position-absolute top-0 end-0 m-2 d-none d-md-block" title="Ampliar Mapa"><i class="fa fa-expand"></i></button>
+          <button id="btn-fechar" class="btn btn-light btn-sm position-absolute top-0 end-0 m-2 d-none" style="z-index:9999;" title="Fechar"><i class="fa fa-times"></i></button>
         </div>
 
         <script>
           const btnExpandir = document.getElementById("btn-expandir");
           const btnFechar = document.getElementById("btn-fechar");
           const mapaDiv = document.getElementById("map");
-
           btnExpandir.addEventListener("click", () => {
-            mapaDiv.classList.remove("map-normal");
-            mapaDiv.classList.add("map-fullscreen");
-            btnExpandir.classList.add("d-none");
-            btnFechar.classList.remove("d-none");
-
-            setTimeout(() => {
-              map.invalidateSize();
-            }, 300);
+            mapaDiv.classList.remove("map-normal"); mapaDiv.classList.add("map-fullscreen");
+            btnExpandir.classList.add("d-none"); btnFechar.classList.remove("d-none");
+            setTimeout(() => { map.invalidateSize(); }, 300);
           });
-
           btnFechar.addEventListener("click", () => {
-            mapaDiv.classList.remove("map-fullscreen");
-            mapaDiv.classList.add("map-normal");
-            btnExpandir.classList.remove("d-none");
-            btnFechar.classList.add("d-none");
-
-            setTimeout(() => {
-              map.invalidateSize();
-            }, 300);
+            mapaDiv.classList.remove("map-fullscreen"); mapaDiv.classList.add("map-normal");
+            btnExpandir.classList.remove("d-none"); btnFechar.classList.add("d-none");
+            setTimeout(() => { map.invalidateSize(); }, 300);
           });
-
         </script>
-
-
-
       </div>
     </div>
   </div>
-
 </div>
 {% endblock %}
 
@@ -286,6 +190,8 @@
 
     let marcadores = [];
     const markerGroup = L.featureGroup().addTo(map);
+
+    // cores por situação (para não-urgentes)
     const cores = {
       "não iniciado": "gray",
       "em andamento": "blue",
@@ -294,6 +200,14 @@
       "cancelado": "red",
       "finalizado": "green"
     };
+
+    // ícones
+    function iconSituacao(cor) {
+      return L.AwesomeMarkers.icon({ icon:'wrench', prefix:'fa', markerColor: cor || 'blue' });
+    }
+    const iconUrgente = L.AwesomeMarkers.icon({
+      icon: 'exclamation', prefix: 'fa', markerColor: 'red'
+    });
 
     function getChecked(classe) {
       return Array.from(document.querySelectorAll(`.${classe}:checked`)).map(i => i.value.toLowerCase());
@@ -306,47 +220,61 @@
       const situacoes = getChecked("filtro-situacao");
       const contratos = getChecked("filtro-contrato");
 
-      marcadores.forEach(item => {
-        const situacao = item.situacao.toLowerCase();
-        const contrato = item.contrato.toLowerCase();
+      (marcadores || []).forEach(item => {
+        const situacao = (item.situacao || '').toLowerCase();
+        const contrato = (item.contrato || '').toLowerCase();
 
         if (!situacoes.some(s => situacao.includes(s))) return;
         if (contratos.length && !contratos.includes(contrato)) return;
 
         let lat = parseFloat(item.lat);
         let lng = parseFloat(item.lng);
-        const chave = `${lat.toFixed(6)},${lng.toFixed(6)}`;
+        if (Number.isNaN(lat) || Number.isNaN(lng)) return;
 
+        // espalhar se houverem pontos na mesma coordenada
+        const chave = `${lat.toFixed(6)},${lng.toFixed(6)}`;
         if (posicoesUsadas[chave]) {
           const count = posicoesUsadas[chave];
-          const angle = (count * 45) * (Math.PI / 180);
-          const radius = 0.0002 * count;
-          lat += radius * Math.sin(angle);
-          lng += radius * Math.cos(angle);
+          const ang = (count * 45) * (Math.PI / 180);
+          const raio = 0.0002 * count;
+          lat += raio * Math.sin(ang);
+          lng += raio * Math.cos(ang);
           posicoesUsadas[chave] += 1;
         } else {
           posicoesUsadas[chave] = 1;
         }
 
-        const cor = Object.keys(cores).find(k => situacao.includes(k)) || "blue";
-        const icon = L.AwesomeMarkers.icon({
-          icon: 'wrench',
-          markerColor: cores[cor],
-          prefix: 'fa'
+        // escolha do ícone
+        let icon;
+        if (item.urgente) {
+          icon = iconUrgente;  // pin vermelho com exclamação
+        } else {
+          const corKey = Object.keys(cores).find(k => situacao.includes(k)) || "em andamento";
+          icon = iconSituacao(cores[corKey]);
+        }
+
+        const marker = L.marker([lat, lng], {
+          icon,
+          zIndexOffset: item.urgente ? 500 : 0,
+          title: `OS ${item.numero}${item.urgente ? ' — URGENTE' : ''}`
         });
 
-        const marker = L.marker([lat, lng], { icon });
         marker.bindPopup(`
-          <strong><a href="${item.url}" class="text-decoration-none">${item.local_nome}</a></strong><br/>
-          <a href="${item.url}" class="text-primary text-decoration-none">O.S. Nº <strong>${item.numero}</strong></a><br/>
-          Situação: ${item.situacao}<br/>
-          Contrato: ${item.contrato}
+          <div style="min-width:220px">
+            <div class="fw-bold">
+              OS ${item.numero} ${item.urgente ? '<span class="badge bg-danger">URGENTE</span>' : ''}
+            </div>
+            <div class="text-muted">Situação: ${item.situacao || '-'}</div>
+            <div class="text-muted">Contrato: ${item.contrato || '-'}</div>
+            <a class="btn btn-sm btn-outline-primary mt-2" href="${item.url}">Abrir</a>
+          </div>
         `);
+
         markerGroup.addLayer(marker);
       });
 
       if (markerGroup.getLayers().length > 0) {
-        map.fitBounds(markerGroup.getBounds().pad(0.1));
+        map.fitBounds(markerGroup.getBounds().pad(0.12), { maxZoom: 15 });
       }
     }
 
@@ -354,21 +282,36 @@
       fetch("{% url 'api_mapa_ordens_geral' %}")
         .then(res => res.json())
         .then(data => {
-          marcadores = data.marcadores;
+          marcadores = data.marcadores || [];
           aplicarFiltros();
-        });
+        })
+        .catch(err => console.error('Erro ao carregar marcadores:', err));
     }
 
-    document.querySelectorAll('.filtro-situacao, .filtro-contrato').forEach(input => {
-      input.addEventListener('change', aplicarFiltros);
-    });
+    
+      const legend = L.control({ position: 'bottomleft' });
+      legend.onAdd = function () {
+        const div = L.DomUtil.create('div', 'map-legend');
+        div.innerHTML = `
+          <div class="legend-item"><span class="legend-dot nao-iniciado"></span> Não Iniciado</div>
+          <div class="legend-item"><span class="legend-dot"></span> Em Andamento</div>
+          <div class="legend-item"><span class="legend-dot urgent"></span> URGENTE</div>
+        `;
+        return div;
+      };
+      legend.addTo(map);
 
-    carregarDados();                      // Carrega ao entrar
-    setInterval(carregarDados, 30000);    // Atualiza a cada 30s
+
+
+
+    // eventos dos filtros
+    document.querySelectorAll('.filtro-situacao, .filtro-contrato')
+      .forEach(input => input.addEventListener('change', aplicarFiltros));
+
+    // inicializa
+    carregarDados();                   // ao entrar
+    setInterval(carregarDados, 30000); // a cada 30s
   });
 </script>
-
-
-
-
 {% endblock %}
+

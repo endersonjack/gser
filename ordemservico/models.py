@@ -44,6 +44,13 @@ class OrdemServico(models.Model):
         if self.situacao != 'finalizado':
             self.data_termino = None
 
+        # Se finalizou, não pode permanecer urgente
+        if self.situacao == 'finalizado' and self.urgente:
+            self.urgente = False
+
+        # Flags para pós-save
+        finalizando = (self.situacao == 'finalizado')
+
         # descobrir valor anterior de 'urgente' (para saber se acabou de ligar)
         was_urgent = None
         if self.pk:
@@ -51,22 +58,14 @@ class OrdemServico(models.Model):
 
         super().save(*args, **kwargs)
 
-        # Se a OS acabou de virar urgente, propaga para serviços existentes
-        if self.urgente and (was_urgent is False or was_urgent is None):
-            # bulk update, sem disparar save() por item (muito mais rápido)
+        # Se a OS acabou de virar urgente (e não está finalizada), propaga para serviços existentes
+        if self.urgente and (was_urgent is False or was_urgent is None) and not finalizando:
+            # bulk update, sem disparar save() por item (rápido)
             self.servicos.update(urgente=True)
 
-    @property
-    def numero_formatado(self):
-        try:
-            return f"{int(self.numero):04d}"
-        except (TypeError, ValueError):
-            return self.numero  # fallback se não for número válido
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['contrato', 'numero'], name='unique_numero_por_contrato')
-        ]
+        # Se finalizou, zera urgência de todos os serviços
+        if finalizando:
+            self.servicos.filter(urgente=True).update(urgente=False)
 
 
 class Servico(models.Model):
@@ -85,19 +84,21 @@ class Servico(models.Model):
         if self.situacao != 'finalizado':
             self.data_finalizacao = None
 
+        # Se a OS está finalizada, o serviço não pode permanecer urgente
+        if self.ordem_id and self.ordem.situacao == 'finalizado' and self.urgente:
+            self.urgente = False
+
         was_urgent = None
         if self.pk:
             was_urgent = type(self).objects.filter(pk=self.pk).values_list('urgente', flat=True).first()
 
         super().save(*args, **kwargs)
 
+        # Se o serviço virou urgente agora, só "sobe" para a OS se a OS não estiver finalizada
         if self.urgente and (was_urgent is False or was_urgent is None):
-            if not self.ordem.urgente:
-                OrdemServico.objects.filter(pk=self.ordem_id).update(urgente=True)
-
-    def __str__(self):
-        return f"{self.descricao[:40]}..."
-
+            if not self.ordem.urgente and self.ordem.situacao != 'finalizado':
+                # evita religar urgência em OS finalizada
+                OrdemServico.objects.filter(pk=self.ordem_id).exclude(situacao='finalizado').update(urgente=True)
 
 class Album(models.Model):
     servico = models.ForeignKey(Servico, on_delete=models.CASCADE, related_name="albuns")
