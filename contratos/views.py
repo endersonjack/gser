@@ -51,6 +51,10 @@ def dashboard_geral(request):
     total_finalizadas = ordens.filter(situacao="finalizado").count()
     percentual_finalizadas = round((total_finalizadas / total_os) * 100, 1) if total_os else 0
     ultima_os = ordens.order_by('-id').first()
+    
+    # porcentagem de serviços finalizados
+    servicos_finalizados = Servico.objects.filter(ordem__in=ordens, situacao='finalizado').count()
+    percentual_servicos_finalizados = round((servicos_finalizados / total_servicos) * 100, 1) if total_servicos else 0
 
     # Contagem por status
     status_counts = {
@@ -71,6 +75,7 @@ def dashboard_geral(request):
         'total_os': total_os,
         'total_servicos': total_servicos,
         'percentual_finalizadas': percentual_finalizadas,
+        'percentual_servicos_finalizados': percentual_servicos_finalizados,  
         'ultima_os': ultima_os,
         'filtros': {
             'contrato_id': contrato_id,
@@ -118,6 +123,11 @@ def dashboard_contrato(request, id):
     ultimas_ordens = ordens.order_by('-id')[:10]
 
     percentual_finalizadas = round((status_counts['finalizado'] / total_os) * 100) if total_os else 0
+    
+    # porcentagem de serviços finalizados para este contrato
+    servicos_finalizados = Servico.objects.filter(ordem__contrato=contrato, situacao='finalizado').count()
+    percentual_servicos_finalizados = round((servicos_finalizados / total_servicos) * 100, 1) if total_servicos else 0
+
 
     status_info = {
         "nao_iniciado": {"label": "Não Iniciado", "color": "secondary", "icon": "circle"},
@@ -138,7 +148,7 @@ def dashboard_contrato(request, id):
         'ultimas_ordens': ultimas_ordens,
         'percentual_finalizadas': percentual_finalizadas,
         'ultimos_servicos': ultimos_servicos,
-        # ALERTAS:
+        'percentual_servicos_finalizados': percentual_servicos_finalizados,  
         'ordens_30_dias': ordens_30_dias,
         'ordens_sem_servicos': ordens_sem_servicos,
         'top_5_ordens_antigas': top_5_ordens_antigas,

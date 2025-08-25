@@ -67,6 +67,23 @@ class OrdemServico(models.Model):
         if finalizando:
             self.servicos.filter(urgente=True).update(urgente=False)
 
+    class Meta:
+        ordering = ['-numero']
+
+    def __str__(self):
+        return f"OS {self.numero_formatado} - {self.contrato}"
+
+    @property
+    def numero_formatado(self):
+        """
+        Retorna o número da OS com zeros à esquerda, padronizado em 4 dígitos.
+        Exemplo: 1 -> '0001'
+        """
+        try:
+            return str(int(self.numero)).zfill(4)
+        except (ValueError, TypeError):
+            return str(self.numero)
+
 
 class Servico(models.Model):
     ordem = models.ForeignKey(OrdemServico, on_delete=models.CASCADE, related_name='servicos')

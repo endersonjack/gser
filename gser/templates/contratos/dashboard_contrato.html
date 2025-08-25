@@ -84,7 +84,7 @@
           <div class="card-body d-flex flex-column">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <div>
-                <h6 class="card-title mb-0 text-uppercase small">% Finalizadas</h6>
+                <h6 class="card-title mb-0 text-uppercase small">% O.S Finalizadas</h6>
                 <h3 class="mb-0">{{ percentual_finalizadas }}%</h3>
               </div>
               <i class="fa fa-check-double fa-2x opacity-25"></i>
@@ -107,19 +107,23 @@
         </div>
       </div>
 
-      <div class="col">
-        <div class="card text-white bg-info h-100">
-          <div class="card-body d-flex flex-column">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <div>
-                <h6 class="card-title mb-0 text-uppercase small">Última O.S.</h6>
-                <h3 class="mb-0">{{ ultima_os.numero_formatado }}</h3>
-              </div>
-              <i class="fa fa-clock fa-2x opacity-25"></i>
-            </div>
-          </div>
+      <!-- % Serviços Finalizados -->
+<div class="col">
+  <div class="card text-white bg-info h-100">
+    <div class="card-body d-flex flex-column">
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <div>
+          <h6 class="card-title mb-0 text-uppercase small">% Serviços Finalizados</h6>
+          <h3 class="mb-0">{{ percentual_servicos_finalizados }}%</h3>
         </div>
+        <i class="fa fa-clipboard-check fa-2x opacity-25"></i>
       </div>
+    </div>
+  </div>
+</div>
+
+
+
     </div>
 
     <!-- Tabela -->
